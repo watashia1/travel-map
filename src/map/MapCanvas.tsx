@@ -10,12 +10,12 @@ import {
   OverlayScaleMode,
   BuiltinBasemap
 } from '../types';
-import { createMapProjection, calculateFitToPoints } from './projections';
+import { createMapProjection, calculateFitToPoints, calculateFitToImage } from './projections';
 import { createCoordinateTransformer } from './transformer';
 import { RouteLayer } from './RouteLayer';
 import { MarkerLayer } from './MarkerLayer';
 import { LabelLayer } from './LabelLayer';
-import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Crosshair } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Crosshair, Image as ImageIcon } from 'lucide-react';
 
 interface MapCanvasProps {
   places: Place[];
@@ -134,6 +134,19 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     }
   };
 
+  // Fit to image handler (shows entire custom basemap)
+  const handleFitToImage = () => {
+    const imgW = (basemap as any).imageWidth || dimensions.width;
+    const imgH = (basemap as any).imageHeight || dimensions.height;
+    const fit = calculateFitToImage(imgW, imgH, dimensions.width, dimensions.height);
+    onCameraChange({
+      ...camera,
+      zoom: fit.zoom,
+      panX: fit.panX,
+      panY: fit.panY
+    });
+  };
+
   // Zoom handlers
   const handleZoom = (delta: number) => {
     const newZoom = Math.min(Math.max(0.3, camera.zoom + delta), 20);
@@ -229,6 +242,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           <Maximize2 size={13} className="mr-1" />
           适配全部地点
         </button>
+        {isCustomImage && (
+          <button
+            onClick={handleFitToImage}
+            title="缩放以完整显示底图图片"
+            className="p-1.5 hover:bg-purple-50 rounded text-purple-600 hover:text-purple-700 transition flex items-center text-xs px-2 font-medium"
+          >
+            <ImageIcon size={13} className="mr-1" />
+            适应整图
+          </button>
+        )}
         <div className="w-[1px] h-4 bg-slate-200 my-auto" />
         <button
           onClick={() => handleZoom(0.3)}
@@ -306,7 +329,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                 y={0}
                 width={(basemap as any).imageWidth || dimensions.width}
                 height={(basemap as any).imageHeight || dimensions.height}
-                preserveAspectRatio="xMidYMid slice"
+                preserveAspectRatio="xMidYMid meet"
               />
             ) : (
               <g id="countries-layer">
@@ -333,6 +356,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             transformer={transformer}
             style={routeStyle}
             canvasWidth={dimensions.width}
+            cameraZoom={camera.zoom}
           />
         </g>
 

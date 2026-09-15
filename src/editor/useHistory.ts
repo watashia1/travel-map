@@ -162,7 +162,12 @@ export function useHistory<T>(initialState: T | (() => T), storageKey?: string) 
     if (!storageKey) return;
     const timer = setTimeout(() => {
       try {
-        localStorage.setItem(storageKey, JSON.stringify(history.present));
+        const stateToSave = { ...history.present } as any;
+        if (stateToSave.basemap && stateToSave.basemap.imageUrl) {
+          const { imageUrl, ...cleanBasemap } = stateToSave.basemap;
+          stateToSave.basemap = cleanBasemap;
+        }
+        localStorage.setItem(storageKey, JSON.stringify(stateToSave));
       } catch (err) {
         console.warn('Failed to autosave to localStorage', err);
       }

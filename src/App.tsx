@@ -8,7 +8,9 @@ import {
   LabelStyle,
   BasemapConfig,
   CameraState,
-  OverlayScaleMode
+  OverlayScaleMode,
+  CalibrationPoint,
+  CalibratedImageBasemap
 } from './types';
 import { useHistory } from './editor/useHistory';
 import { PlaceList } from './editor/PlaceList';
@@ -21,6 +23,9 @@ import { ConfirmModal } from './editor/ConfirmModal';
 import { AmbiguityModal } from './editor/AmbiguityModal';
 import { parseInputText, loadPlacesDatabase } from './parser/placeSearch';
 import { getImageObjectUrl } from './map/storage/imageStore';
+import { calculateFitToImage } from './map/projections';
+import { fitAffineTransform } from './map/transformer';
+import { OFFICIAL_BASEMAP_REGISTRY } from './map/basemaps/registry';
 import {
   MapPin,
   Map as MapIcon,
@@ -128,10 +133,21 @@ export const App: React.FC = () => {
     loadPlacesDatabase();
   }, []);
 
-  // Restore image url from IndexedDB if basemap is custom image
+  // Restore image url from IndexedDB or official registry if basemap is custom image
   useEffect(() => {
-    if (project.basemap.type !== 'builtin' && (project.basemap as any).assetId && !(project.basemap as any).imageUrl) {
-      getImageObjectUrl((project.basemap as any).assetId).then(url => {
+    const bm = project.basemap;
+    if (bm.type !== 'builtin' && (bm as any).assetId && !(bm as any).imageUrl) {
+      // Check official registry first
+      const official = OFFICIAL_BASEMAP_REGISTRY.find(o => o.id === (bm as any).assetId);
+      if (official && official.assetPath) {
+        setProject(prev => ({
+          ...prev,
+          basemap: { ...prev.basemap, imageUrl: official.assetPath } as any
+        }));
+        return;
+      }
+
+      getImageObjectUrl((bm as any).assetId).then(url => {
         if (url) {
           setProject(prev => ({
             ...prev,
@@ -222,8 +238,63 @@ export const App: React.FC = () => {
     }));
   }, [commitTransaction]);
 
-  // Point picking for custom basemaps
-  const handlePlacePicked = (placeId: string, _imgX: number, _imgY: number, normX: number, normY: number) => {
+  // Fit view to entire image
+  const handleFitToImage = useCallback((w?: number, h?: number) => {
+    const imgW = w || (project.basemap as any).imageWidth || 1000;
+    const imgH = h || (project.basemap as any).imageHeight || 600;
+    const fit = calculateFitToImage(imgW, imgH, 1000, 600);
+    setProject(prev => ({
+      ...prev,
+      camera: fit
+    }));
+  }, [project.basemap, setProject]);
+
+  // Point picking for custom basemaps (both free-image & calibrated-image)
+  const handlePlacePicked = (placeId: string, imgX: number, imgY: number, normX: number, normY: number) => {
+    if (project.basemap.type === 'calibrated-image') {
+      const place = project.places.find(p => p.id === placeId);
+      if (!place) return;
+
+      const currentPoints = project.basemap.controlPoints || [];
+      const filtered = currentPoints.filter(cp => cp.placeId !== placeId);
+      const newPoint: CalibrationPoint = {
+        placeId: place.id,
+        name: place.displayName,
+        lat: place.lat,
+        lon: place.lon,
+        imageX: imgX,
+        imageY: imgY
+      };
+      const updatedPoints = [...filtered, newPoint];
+
+      let newTransform = project.basemap.transform;
+      let newError = project.basemap.errorPx;
+
+      if (updatedPoints.length >= 3) {
+        const fit = fitAffineTransform(updatedPoints);
+        if (fit) {
+          newTransform = fit.transform;
+          newError = fit.errorPx;
+        }
+      }
+
+      setProject(prev => ({
+        ...prev,
+        basemap: {
+          ...prev.basemap,
+          controlPoints: updatedPoints,
+          transform: newTransform,
+          errorPx: newError
+        } as CalibratedImageBasemap,
+        places: prev.places.map(p =>
+          p.id === placeId ? { ...p, status: 'resolved' } : p
+        )
+      }));
+      setPickingPlaceId(null);
+      return;
+    }
+
+    // Free image mode:
     setProject(prev => ({
       ...prev,
       places: prev.places.map(p =>
@@ -277,7 +348,20 @@ export const App: React.FC = () => {
 
     if (presetId === 'galapagos') {
       presetText = `圣克里斯托瓦尔岛\n弗雷里安纳岛\n伊莎贝拉岛\n圣地亚哥岛`;
-      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'world' };
+      const galapagosItem = OFFICIAL_BASEMAP_REGISTRY.find(o => o.id === 'galapagos-topo');
+      if (galapagosItem) {
+        newBasemap = {
+          type: 'calibrated-image',
+          assetId: galapagosItem.id,
+          imageName: galapagosItem.title,
+          imageWidth: galapagosItem.imageWidth,
+          imageHeight: galapagosItem.imageHeight,
+          imageUrl: galapagosItem.assetPath,
+          transform: galapagosItem.defaultTransform,
+          controlPoints: galapagosItem.defaultControlPoints || [],
+          errorPx: galapagosItem.errorPx
+        };
+      }
     } else if (presetId === 'arctic_true') {
       presetText = `奥斯陆\n特罗姆瑟\n朗伊尔城\n89.9, 0 | 北极点`;
       newBasemap = { ...defaultBasemap, projection: 'azimuthalEquidistant', region: 'arctic' };
@@ -293,11 +377,16 @@ export const App: React.FC = () => {
     }
 
     const parsed = await parseInputText(presetText);
+    let initialCam = defaultCamera;
+    if (presetId === 'galapagos') {
+      initialCam = calculateFitToImage(2160, 2160, 1000, 600);
+    }
+
     setProject(prev => ({
       ...prev,
       places: parsed,
       basemap: newBasemap,
-      camera: defaultCamera
+      camera: initialCam
     }));
     setActiveTab('places');
   };
@@ -440,6 +529,7 @@ export const App: React.FC = () => {
                 pickingPlaceId={pickingPlaceId}
                 onSelectPickingPlace={setPickingPlaceId}
                 onChangeBasemap={newBasemap => setProject(prev => ({ ...prev, basemap: newBasemap }))}
+                onFitImage={handleFitToImage}
               />
             )}
 
@@ -449,6 +539,7 @@ export const App: React.FC = () => {
                 markerStyle={project.markerStyle}
                 labelStyle={project.labelStyle}
                 overlayScaleMode={project.overlayScaleMode}
+                basemapType={project.basemap.type}
                 onChangeRouteStyle={stl => setProject(prev => ({ ...prev, routeStyle: { ...prev.routeStyle, ...stl } }))}
                 onChangeMarkerStyle={stl => setProject(prev => ({ ...prev, markerStyle: { ...prev.markerStyle, ...stl } }))}
                 onChangeLabelStyle={stl => setProject(prev => ({ ...prev, labelStyle: { ...prev.labelStyle, ...stl } }))}

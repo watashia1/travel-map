@@ -8,13 +8,15 @@ interface RouteLayerProps {
   transformer: CoordinateTransformer;
   style: RouteStyle;
   canvasWidth?: number;
+  cameraZoom?: number;
 }
 
 export const RouteLayer: React.FC<RouteLayerProps> = ({
   places,
   transformer,
   style,
-  canvasWidth = 1000
+  canvasWidth = 1000,
+  cameraZoom = 1
 }) => {
   // 1. Group continuous resolved places into segments (unresolved breaks the route)
   const segments: Place[][] = [];
@@ -37,21 +39,40 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
   if (segments.length === 0) return null;
 
   const pathStrings: string[] = [];
+  // Free image basemap does not have spherical coordinates, forbid geodesic
+  const isFreeImage = transformer.type === 'free-image';
+  const effectiveMode = isFreeImage && style.mode === 'geodesic' ? 'decorative-curve' : style.mode;
+  const zoom = Math.max(cameraZoom, 0.001);
 
   for (const seg of segments) {
     for (let i = 0; i < seg.length - 1; i++) {
       const p1 = seg[i];
       const p2 = seg[i + 1];
 
-      const startPt = transformer.project(p1.lon, p1.lat, p1);
-      const endPt = transformer.project(p2.lon, p2.lat, p2);
-      if (!startPt || !endPt) continue;
+      const rawStartPt = transformer.project(p1.lon, p1.lat, p1);
+      const rawEndPt = transformer.project(p2.lon, p2.lat, p2);
+      if (!rawStartPt || !rawEndPt) continue;
 
-      if (style.mode === 'straight-screen') {
+      // Scale manual screen offsets to map space according to camera zoom
+      const p1OffX = (p1.manualOffsetX || 0) / zoom;
+      const p1OffY = (p1.manualOffsetY || 0) / zoom;
+      const p2OffX = (p2.manualOffsetX || 0) / zoom;
+      const p2OffY = (p2.manualOffsetY || 0) / zoom;
+
+      const startPt: [number, number] = [
+        rawStartPt[0] + p1OffX,
+        rawStartPt[1] + p1OffY
+      ];
+      const endPt: [number, number] = [
+        rawEndPt[0] + p2OffX,
+        rawEndPt[1] + p2OffY
+      ];
+
+      if (effectiveMode === 'straight-screen') {
         pathStrings.push(
           `M ${startPt[0].toFixed(2)} ${startPt[1].toFixed(2)} L ${endPt[0].toFixed(2)} ${endPt[1].toFixed(2)}`
         );
-      } else if (style.mode === 'decorative-curve') {
+      } else if (effectiveMode === 'decorative-curve') {
         const dx = endPt[0] - startPt[0];
         const dy = endPt[1] - startPt[1];
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -66,7 +87,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
           `M ${startPt[0].toFixed(2)} ${startPt[1].toFixed(2)} Q ${cx.toFixed(2)} ${cy.toFixed(2)} ${endPt[0].toFixed(2)} ${endPt[1].toFixed(2)}`
         );
       } else {
-        // 'geodesic' default: Great circle interpolation
+        // 'geodesic' spherical great-circle interpolation
         const interpolator = d3.geoInterpolate([p1.lon, p1.lat], [p2.lon, p2.lat]);
         const numSteps = 24;
         const pts: [number, number][] = [];
@@ -76,20 +97,22 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
           const [lon, lat] = interpolator(t);
           const projected = transformer.project(lon, lat);
           if (projected) {
-            pts.push(projected);
+            // Blend manual offsets from start to end
+            const offX = (1 - t) * p1OffX + t * p2OffX;
+            const offY = (1 - t) * p1OffY + t * p2OffY;
+            pts.push([projected[0] + offX, projected[1] + offY]);
           }
         }
 
         if (pts.length < 2) continue;
 
-        // Check for antimeridian jump (wrap across edge)
+        // Antimeridian wrap safety
         let subPath = `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
         for (let k = 1; k < pts.length; k++) {
           const prev = pts[k - 1];
           const curr = pts[k];
-          // If distance between successive steps exceeds 40% of canvas, split line
           const deltaX = Math.abs(curr[0] - prev[0]);
-          if (deltaX > canvasWidth * 0.4) {
+          if (deltaX > canvasWidth * 0.45) {
             subPath += ` M ${curr[0].toFixed(2)} ${curr[1].toFixed(2)}`;
           } else {
             subPath += ` L ${curr[0].toFixed(2)} ${curr[1].toFixed(2)}`;
@@ -136,6 +159,7 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
           strokeDasharray={strokeDasharray}
           strokeLinecap="round"
           strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
           markerEnd={style.showArrows ? 'url(#route-arrow)' : undefined}
         />
       ))}

@@ -8,12 +8,14 @@ import {
   MarkerType,
   OverlayScaleMode
 } from '../types';
+import { AlertCircle } from 'lucide-react';
 
 interface StylePanelProps {
   routeStyle: RouteStyle;
   markerStyle: MarkerStyle;
   labelStyle: LabelStyle;
   overlayScaleMode: OverlayScaleMode;
+  basemapType?: string;
   onChangeRouteStyle: (stl: Partial<RouteStyle>) => void;
   onChangeMarkerStyle: (stl: Partial<MarkerStyle>) => void;
   onChangeLabelStyle: (stl: Partial<LabelStyle>) => void;
@@ -25,6 +27,7 @@ export const StylePanel: React.FC<StylePanelProps> = ({
   markerStyle,
   labelStyle,
   overlayScaleMode,
+  basemapType,
   onChangeRouteStyle,
   onChangeMarkerStyle,
   onChangeLabelStyle,
@@ -33,6 +36,8 @@ export const StylePanel: React.FC<StylePanelProps> = ({
   const colorPresets = [
     '#e63946', '#2563eb', '#059669', '#d97706', '#7c3aed', '#db2777', '#0f172a', '#475569'
   ];
+
+  const isFreeImage = basemapType === 'free-image';
 
   return (
     <div className="flex flex-col h-full overflow-y-auto p-4 space-y-6 text-xs text-slate-700">
@@ -46,30 +51,47 @@ export const StylePanel: React.FC<StylePanelProps> = ({
           <label className="block text-slate-500 mb-1.5 font-medium">连线计算方式</label>
           <div className="grid grid-cols-3 gap-1.5">
             {[
-              { id: 'geodesic', label: '球面测地线 (推荐)' },
+              { id: 'geodesic', label: '球面测地线' },
               { id: 'straight-screen', label: '平面直线' },
               { id: 'decorative-curve', label: '视觉装饰曲线' }
-            ].map(m => (
-              <button
-                key={m.id}
-                onClick={() => onChangeRouteStyle({ mode: m.id as RouteMode })}
-                className={`py-1.5 px-1.5 rounded-lg border text-center transition text-[11px] ${
-                  routeStyle.mode === m.id
-                    ? 'bg-blue-50 border-blue-500 text-blue-600 font-medium'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
+            ].map(m => {
+              const disabled = isFreeImage && m.id === 'geodesic';
+              const isCurrent = routeStyle.mode === m.id;
+
+              return (
+                <button
+                  key={m.id}
+                  disabled={disabled}
+                  onClick={() => onChangeRouteStyle({ mode: m.id as RouteMode })}
+                  title={disabled ? '自由底图没有统一地理投影，不能计算真实球面路线' : undefined}
+                  className={`py-1.5 px-1.5 rounded-lg border text-center transition text-[11px] ${
+                    disabled
+                      ? 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed'
+                      : isCurrent
+                      ? 'bg-blue-50 border-blue-500 text-blue-600 font-medium'
+                      : 'border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              );
+            })}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">
-            {routeStyle.mode === 'geodesic'
-              ? '沿地球大圆球面真实飞行路径绘制，跨 180° 经线安全无跳跃。'
-              : routeStyle.mode === 'straight-screen'
-              ? '直接以屏幕直线两点连接。'
-              : '两点间以贝塞尔优雅弧线拱起。'}
-          </div>
+
+          {isFreeImage ? (
+            <div className="text-[10px] text-amber-700 bg-amber-50 p-2 rounded mt-1.5 border border-amber-200 flex items-start space-x-1.5">
+              <AlertCircle size={13} className="shrink-0 text-amber-600 mt-0.5" />
+              <span>自由底图没有统一地理经纬投影，已自动禁用球面测地线，推荐使用“视觉装饰曲线”或“平面直线”。</span>
+            </div>
+          ) : (
+            <div className="text-[10px] text-slate-400 mt-1">
+              {routeStyle.mode === 'geodesic'
+                ? '沿地球大圆球面真实飞行路径绘制，跨 180° 经线安全无跳跃。'
+                : routeStyle.mode === 'straight-screen'
+                ? '直接以屏幕直线两点连接。'
+                : '两点间以优雅贝塞尔弧线拱起连接。'}
+            </div>
+          )}
         </div>
 
         <div>
@@ -145,27 +167,12 @@ export const StylePanel: React.FC<StylePanelProps> = ({
           标记点与图层尺寸策略
         </h4>
 
-        <div>
-          <label className="block text-slate-500 mb-1.5 font-medium">放大地图时红点与文字的尺寸策略</label>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { id: 'screen-fixed', title: '屏幕固定尺寸 (推荐)', desc: '放大地图时红点文字不膨胀' },
-              { id: 'map-scaled', title: '随地图等比缩放', desc: '红点与文字随地图同步放大' }
-            ].map(m => (
-              <button
-                key={m.id}
-                onClick={() => onChangeOverlayScaleMode(m.id as OverlayScaleMode)}
-                className={`p-2 rounded-lg border text-left transition ${
-                  overlayScaleMode === m.id
-                    ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div>{m.title}</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">{m.desc}</div>
-              </button>
-            ))}
-          </div>
+        {/* Scaled mode: standardized to screen-fixed for crystal clarity */}
+        <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-[11px]">
+          <div className="font-semibold text-slate-800">屏幕固定尺寸渲染 (专业地图规范)</div>
+          <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">
+            无论缩放平移地图至何种视角，红点标记与文字标签始终保持设定的物理像素大小，保证最佳视觉可读性且绝不膨胀遮挡地图。
+          </p>
         </div>
 
         <div>

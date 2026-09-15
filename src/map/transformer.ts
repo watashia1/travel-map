@@ -38,7 +38,6 @@ export class EquirectangularImageTransformer implements CoordinateTransformer {
   constructor(private imageWidth: number, private imageHeight: number) {}
 
   project(lon: number, lat: number): [number, number] | null {
-    // Normalization to image coordinates
     const normX = (lon + 180) / 360;
     const normY = (90 - lat) / 180;
     return [normX * this.imageWidth, normY * this.imageHeight];
@@ -49,6 +48,53 @@ export class EquirectangularImageTransformer implements CoordinateTransformer {
     const lat = 90 - (y / this.imageHeight) * 180;
     return [lon, lat];
   }
+}
+
+/**
+ * Checks geometric distribution quality of calibration points
+ */
+export function checkControlPointsQuality(points: CalibrationPoint[]): {
+  isValid: boolean;
+  warning?: string;
+} {
+  if (points.length < 3) {
+    return { isValid: false, warning: '至少需要 3 个控制点。' };
+  }
+
+  const lons = points.map(p => p.lon);
+  const lats = points.map(p => p.lat);
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+
+  if (maxLon - minLon < 0.05 || maxLat - minLat < 0.05) {
+    return {
+      isValid: false,
+      warning: '控制点范围过于集中，无法稳定求解仿射变换。请在地图更大跨度范围内标定。'
+    };
+  }
+
+  // Check collinearity via triangle areas
+  let maxTriangleArea = 0;
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      for (let k = j + 1; k < points.length; k++) {
+        const p1 = points[i], p2 = points[j], p3 = points[k];
+        const area = Math.abs(
+          (p2.lon - p1.lon) * (p3.lat - p1.lat) - (p3.lon - p1.lon) * (p2.lat - p1.lat)
+        );
+        if (area > maxTriangleArea) maxTriangleArea = area;
+      }
+    }
+  }
+
+  if (maxTriangleArea < 0.005) {
+    return {
+      isValid: false,
+      warning: '控制点分布过于接近同一条直线，无法稳定拟合二维仿射变换。请选择分散在东、西、南、北不同方位的地点。'
+    };
+  }
+
+  return { isValid: true };
 }
 
 /**
@@ -82,8 +128,6 @@ export function fitAffineTransform(points: CalibrationPoint[]): {
     sumLatY += lat * imageY;
   }
 
-  // Linear system matrix: [ [sumLon2, sumLonLat, sumLon], [sumLonLat, sumLat2, sumLat], [sumLon, sumLat, n] ]
-  // We can solve using Gaussian elimination or Cramer's rule for 3x3
   function solve3x3(A: number[][], B: number[]): [number, number, number] | null {
     const det =
       A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
@@ -133,7 +177,7 @@ export function fitAffineTransform(points: CalibrationPoint[]): {
   const [a, b, tx] = solX;
   const [c, d, ty] = solY;
 
-  // Calculate Mean Square Error (RMSE in pixels)
+  // Compute Root Mean Square Error (RMSE) in pixels
   let totalErrorSq = 0;
   for (const p of points) {
     const estX = a * p.lon + b * p.lat + tx;
@@ -155,7 +199,21 @@ export function fitAffineTransform(points: CalibrationPoint[]): {
  */
 export class CalibratedImageTransformer implements CoordinateTransformer {
   type = 'calibrated-image';
-  constructor(private transform: CalibrationTransform) {}
+  private transform: CalibrationTransform;
+
+  constructor(
+    arg1: CalibrationTransform | number,
+    _arg2?: number,
+    arg3?: CalibrationTransform
+  ) {
+    if (typeof arg1 === 'object' && arg1 !== null) {
+      this.transform = arg1;
+    } else if (arg3) {
+      this.transform = arg3;
+    } else {
+      this.transform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
+    }
+  }
 
   project(lon: number, lat: number): [number, number] | null {
     const { a, b, c, d, tx, ty } = this.transform;
@@ -163,6 +221,18 @@ export class CalibratedImageTransformer implements CoordinateTransformer {
     const y = c * lon + d * lat + ty;
     if (isNaN(x) || isNaN(y)) return null;
     return [x, y];
+  }
+
+  invert(x: number, y: number): [number, number] | null {
+    const { a, b, c, d, tx, ty } = this.transform;
+    const det = a * d - b * c;
+    if (Math.abs(det) < 1e-10) return null;
+
+    const dx = x - tx;
+    const dy = y - ty;
+    const lon = (d * dx - b * dy) / det;
+    const lat = (-c * dx + a * dy) / det;
+    return [lon, lat];
   }
 }
 
@@ -181,7 +251,6 @@ export class FreeImageTransformer implements CoordinateTransformer {
         place.visualPosition.y * this.imageHeight
       ];
     }
-    // Fallback: place in middle area
     return [this.imageWidth / 2, this.imageHeight / 2];
   }
 
@@ -219,6 +288,5 @@ export function createCoordinateTransformer(
     return new FreeImageTransformer(w, h);
   }
 
-  // Fallback to D3
   return new D3ProjectionTransformer(d3Proj);
 }

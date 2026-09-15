@@ -26,7 +26,6 @@ export function createMapProjection(
       proj = d3.geoNaturalEarth1();
       break;
     case 'azimuthalEquidistant':
-      // True Polar Azimuthal Equidistant centered on North Pole
       proj = d3.geoAzimuthalEquidistant().rotate([0, -90]);
       break;
     case 'stereographic':
@@ -38,13 +37,10 @@ export function createMapProjection(
       break;
   }
 
-  // Base scale calculation
   const baseScale = width / 6.28;
   proj.translate([width / 2, height / 2]);
 
-  // Adjust for region presets if specified
   if (basemap.projection === 'azimuthalEquidistant' || basemap.projection === 'stereographic') {
-    // Polar view fits nicely from 50N to 90N
     proj.scale(Math.min(width, height) * 0.75);
     proj.clipAngle(180 - 1e-4);
   } else {
@@ -89,6 +85,7 @@ export interface FitResult {
 
 /**
  * Calculates optimal camera zoom and pan to fit all resolved places within viewport
+ * Corrected formula: zoom = Math.min(zoomX, zoomY) to guarantee bounds fitting
  */
 export function calculateFitToPoints(
   places: Place[],
@@ -111,10 +108,11 @@ export function calculateFitToPoints(
 
   if (validPoints.length === 1) {
     const pt = validPoints[0];
+    const singleZoom = 1.5;
     return {
-      zoom: 1.5,
-      panX: (width / 2 - pt[0]),
-      panY: (height / 2 - pt[1])
+      zoom: singleZoom,
+      panX: -(pt[0] - width / 2) * singleZoom,
+      panY: -(pt[1] - height / 2) * singleZoom
     };
   }
 
@@ -136,17 +134,46 @@ export function calculateFitToPoints(
   const availWidth = width * (1 - paddingRatio * 2);
   const availHeight = height * (1 - paddingRatio * 2);
 
-  const zoom = Math.min(Math.max(availWidth / ptsWidth, availHeight / ptsHeight), 12);
+  // Must use Math.min to ensure BOTH width and height fit into viewport
+  const zoomX = availWidth / ptsWidth;
+  const zoomY = availHeight / ptsHeight;
+  const zoom = Math.min(Math.max(Math.min(zoomX, zoomY), 0.4), 15);
+
   const centerX = (minX + maxX) / 2;
   const centerY = (minY + maxY) / 2;
 
-  // Screen center offset
   const panX = -(centerX - width / 2) * zoom;
   const panY = -(centerY - height / 2) * zoom;
 
   return {
-    zoom: Math.min(Math.max(zoom, 0.5), 15),
+    zoom,
     panX,
     panY
   };
+}
+
+/**
+ * Calculates optimal camera zoom and pan to fit an entire image within viewport
+ */
+export function calculateFitToImage(
+  imageWidth: number,
+  imageHeight: number,
+  width: number,
+  height: number,
+  paddingRatio: number = 0.08
+): FitResult {
+  const availWidth = width * (1 - paddingRatio * 2);
+  const availHeight = height * (1 - paddingRatio * 2);
+
+  const zoomX = availWidth / imageWidth;
+  const zoomY = availHeight / imageHeight;
+  const zoom = Math.min(Math.max(Math.min(zoomX, zoomY), 0.1), 10);
+
+  const centerX = imageWidth / 2;
+  const centerY = imageHeight / 2;
+
+  const panX = -(centerX - width / 2) * zoom;
+  const panY = -(centerY - height / 2) * zoom;
+
+  return { zoom, panX, panY };
 }

@@ -18,7 +18,12 @@ export const ProjectPanel: React.FC<ProjectPanelProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExportJSON = () => {
-    const dataStr = JSON.stringify(projectData, null, 2);
+    const cleanData = { ...projectData };
+    if (cleanData.basemap && (cleanData.basemap as any).imageUrl) {
+      const { imageUrl, ...restBasemap } = cleanData.basemap as any;
+      cleanData.basemap = restBasemap;
+    }
+    const dataStr = JSON.stringify(cleanData, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -57,7 +62,7 @@ export const ProjectPanel: React.FC<ProjectPanelProps> = ({
           项目工程存档与还原
         </h4>
         <p className="text-slate-500 leading-relaxed text-[11px]">
-          项目数据实时防抖暂存于浏览器，包含缩放平移视口 (Camera) 与底图设置。导出 JSON 文件可在任何电脑上 100% 恢复当前画面。
+          项目参数与标定数据实时防抖暂存于当前浏览器。导出 JSON 可备份全部路线与标定点；自定义底图图片保存在当前浏览器本地数据库 (IndexedDB)，本 JSON 文件不包含图片原始文件。
         </p>
 
         <div className="grid grid-cols-2 gap-2 pt-1">
@@ -95,7 +100,7 @@ export const ProjectPanel: React.FC<ProjectPanelProps> = ({
           {[
             {
               id: 'galapagos',
-              title: '案例 A：加拉帕戈斯群岛 (自适应与高密避让)',
+              title: '案例 A：加拉帕戈斯群岛 (内置地形矢量图与仿射标定)',
               desc: '圣克里斯托瓦尔岛 → 弗雷里安纳岛 → 伊莎贝拉岛 → 圣地亚哥岛'
             },
             {
