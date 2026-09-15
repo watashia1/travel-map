@@ -18,29 +18,39 @@ export function createMapProjection(
 ): ProjectionContext {
   let proj: d3.GeoProjection;
 
+  if (basemap.region === 'antarctica' || basemap.projection === 'stereographic') {
+    // Polar stereographic centered at South Pole (rotate [0, 90] points south pole to center)
+    proj = d3.geoStereographic().rotate([0, 90]).clipAngle(45);
+    proj.translate([width / 2, height / 2]);
+    proj.scale(Math.min(width, height) * 0.45);
+    return {
+      projection: proj,
+      pathGenerator: d3.geoPath().projection(proj),
+      width,
+      height
+    };
+  }
+
   switch (basemap.projection) {
-    case 'equalEarth':
-      proj = d3.geoEqualEarth();
-      break;
     case 'naturalEarth':
       proj = d3.geoNaturalEarth1();
       break;
     case 'azimuthalEquidistant':
       proj = d3.geoAzimuthalEquidistant().rotate([0, -90]);
       break;
-    case 'stereographic':
-      proj = d3.geoStereographic().rotate([0, -90]);
-      break;
     case 'mercator':
-    default:
       proj = d3.geoMercator();
+      break;
+    case 'equalEarth':
+    default:
+      proj = d3.geoEqualEarth();
       break;
   }
 
   const baseScale = width / 6.28;
   proj.translate([width / 2, height / 2]);
 
-  if (basemap.projection === 'azimuthalEquidistant' || basemap.projection === 'stereographic') {
+  if (basemap.projection === 'azimuthalEquidistant') {
     proj.scale(Math.min(width, height) * 0.75);
     proj.clipAngle(180 - 1e-4);
   } else {
@@ -49,16 +59,20 @@ export function createMapProjection(
         proj.center([95, 30]).scale(baseScale * 1.8);
         break;
       case 'europe':
-        proj.center([15, 52]).scale(baseScale * 2.8);
+        proj.center([15, 52]).scale(baseScale * 3.0);
         break;
-      case 'china':
-        proj.center([105, 35]).scale(baseScale * 3.5);
+      case 'africa':
+        proj.center([20, 2]).scale(baseScale * 1.7);
         break;
-      case 'japan':
-        proj.center([138, 38]).scale(baseScale * 7.5);
+      case 'north-america':
+        proj.center([-98, 48]).scale(baseScale * 1.6);
         break;
-      case 'arctic':
-        proj.center([0, 78]).scale(baseScale * 2.2);
+      case 'south-america':
+        proj.center([-60, -22]).scale(baseScale * 1.8);
+        break;
+      case 'oceania':
+        // Rotated [-150, 0] centers Pacific at 150°E, protecting 180° antimeridian
+        proj.rotate([-150, 0]).center([0, -22]).scale(baseScale * 2.2);
         break;
       case 'world':
       default:

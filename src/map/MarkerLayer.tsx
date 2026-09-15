@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Place, MarkerStyle, CameraState, OverlayScaleMode } from '../types';
-import { CoordinateTransformer } from './transformer';
+import { CoordinateTransformer, getPlaceMapAnchor } from './transformer';
 
 interface MarkerLayerProps {
   places: Place[];
@@ -11,8 +11,8 @@ interface MarkerLayerProps {
   canvasHeight: number;
   scaleMode?: OverlayScaleMode;
   onDragStart: () => void;
-  onDragMove: (placeId: string, manualOffsetX: number, manualOffsetY: number) => void;
-  onDragEnd: (placeId: string, manualOffsetX: number, manualOffsetY: number) => void;
+  onDragMove: (placeId: string, mapOffsetX: number, mapOffsetY: number) => void;
+  onDragEnd: (placeId: string, mapOffsetX: number, mapOffsetY: number) => void;
 }
 
 export const MarkerLayer: React.FC<MarkerLayerProps> = ({
@@ -45,23 +45,26 @@ export const MarkerLayer: React.FC<MarkerLayerProps> = ({
 
     onDragStart();
     setDraggingId(place.id);
+    const initOffX = place.markerMapOffsetX ?? place.manualOffsetX ?? 0;
+    const initOffY = place.markerMapOffsetY ?? place.manualOffsetY ?? 0;
     dragStartRef.current = {
       startX: e.clientX,
       startY: e.clientY,
-      initialOffsetX: place.manualOffsetX || 0,
-      initialOffsetY: place.manualOffsetY || 0,
-      lastX: place.manualOffsetX || 0,
-      lastY: place.manualOffsetY || 0
+      initialOffsetX: initOffX,
+      initialOffsetY: initOffY,
+      lastX: initOffX,
+      lastY: initOffY
     };
   };
 
   const handlePointerMove = (e: React.PointerEvent, placeId: string) => {
     if (draggingId !== placeId || !dragStartRef.current) return;
-    const dx = e.clientX - dragStartRef.current.startX;
-    const dy = e.clientY - dragStartRef.current.startY;
+    const zoom = Math.max(camera.zoom, 0.001);
+    const dxMap = (e.clientX - dragStartRef.current.startX) / zoom;
+    const dyMap = (e.clientY - dragStartRef.current.startY) / zoom;
 
-    const newX = Math.round(dragStartRef.current.initialOffsetX + dx);
-    const newY = Math.round(dragStartRef.current.initialOffsetY + dy);
+    const newX = parseFloat((dragStartRef.current.initialOffsetX + dxMap).toFixed(2));
+    const newY = parseFloat((dragStartRef.current.initialOffsetY + dyMap).toFixed(2));
     dragStartRef.current.lastX = newX;
     dragStartRef.current.lastY = newY;
 
@@ -87,21 +90,12 @@ export const MarkerLayer: React.FC<MarkerLayerProps> = ({
   return (
     <g id="markers-layer">
       {validPlaces.map((place, idx) => {
-        const pt = transformer.project(place.lon, place.lat, place);
-        if (!pt) return null;
+        const anchor = getPlaceMapAnchor(place, transformer);
+        if (!anchor) return null;
 
-        // Apply camera transformation to map coordinate to get screen position
-        let screenX: number;
-        let screenY: number;
-
-        if (scaleMode === 'screen-fixed') {
-          screenX = (pt[0] - canvasWidth / 2) * zoom + canvasWidth / 2 + panX + (place.manualOffsetX || 0);
-          screenY = (pt[1] - canvasHeight / 2) * zoom + canvasHeight / 2 + panY + (place.manualOffsetY || 0);
-        } else {
-          // Map-scaled
-          screenX = pt[0] + (place.manualOffsetX || 0);
-          screenY = pt[1] + (place.manualOffsetY || 0);
-        }
+        // Apply camera transformation to map anchor to get screen position (zero drift!)
+        const screenX = (anchor[0] - canvasWidth / 2) * zoom + canvasWidth / 2 + panX;
+        const screenY = (anchor[1] - canvasHeight / 2) * zoom + canvasHeight / 2 + panY;
 
         const r = style.size;
         const isDragging = draggingId === place.id;

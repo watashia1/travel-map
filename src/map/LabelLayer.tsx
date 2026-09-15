@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Place, LabelStyle, CameraState, OverlayScaleMode } from '../types';
-import { CoordinateTransformer } from './transformer';
+import { CoordinateTransformer, getPlaceMapAnchor } from './transformer';
 
 interface LabelLayerProps {
   places: Place[];
@@ -73,11 +73,11 @@ export const LabelLayer: React.FC<LabelLayerProps> = ({
     const offsets = new Map<string, { x: number; y: number; anchor: string }>();
 
     for (const place of validPlaces) {
-      const pt = transformer.project(place.lon, place.lat, place);
-      if (!pt) continue;
+      const anchor = getPlaceMapAnchor(place, transformer);
+      if (!anchor) continue;
 
-      const screenBaseX = (pt[0] - canvasWidth / 2) * zoom + canvasWidth / 2 + panX + (place.manualOffsetX || 0);
-      const screenBaseY = (pt[1] - canvasHeight / 2) * zoom + canvasHeight / 2 + panY + (place.manualOffsetY || 0);
+      const screenBaseX = (anchor[0] - canvasWidth / 2) * zoom + canvasWidth / 2 + panX;
+      const screenBaseY = (anchor[1] - canvasHeight / 2) * zoom + canvasHeight / 2 + panY;
 
       // If user has explicitly dragged this label, respect custom offset
       if (place.labelOffsetX !== undefined && place.labelOffsetY !== undefined &&
@@ -182,20 +182,12 @@ export const LabelLayer: React.FC<LabelLayerProps> = ({
   return (
     <g id="labels-layer">
       {validPlaces.map(place => {
-        const pt = transformer.project(place.lon, place.lat, place);
-        if (!pt) return null;
+        const anchor = getPlaceMapAnchor(place, transformer);
+        if (!anchor) return null;
 
-        // Base marker anchor in screen coords
-        let screenBaseX: number;
-        let screenBaseY: number;
-
-        if (scaleMode === 'screen-fixed') {
-          screenBaseX = (pt[0] - canvasWidth / 2) * zoom + canvasWidth / 2 + panX + (place.manualOffsetX || 0);
-          screenBaseY = (pt[1] - canvasHeight / 2) * zoom + canvasHeight / 2 + panY + (place.manualOffsetY || 0);
-        } else {
-          screenBaseX = pt[0] + (place.manualOffsetX || 0);
-          screenBaseY = pt[1] + (place.manualOffsetY || 0);
-        }
+        // Base marker anchor in screen coords (locks to marker glyph at all zoom/pan)
+        const screenBaseX = (anchor[0] - canvasWidth / 2) * zoom + canvasWidth / 2 + panX;
+        const screenBaseY = (anchor[1] - canvasHeight / 2) * zoom + canvasHeight / 2 + panY;
 
         const auto = computedOffsets.get(place.id) || { x: 14, y: -12, anchor: 'start' };
         const offsetX = place.labelOffsetX ?? auto.x;

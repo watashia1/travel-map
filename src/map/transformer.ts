@@ -9,6 +9,24 @@ export interface CoordinateTransformer {
 }
 
 /**
+ * Unified place anchor in map coordinates (map-space / image pixels).
+ * Used by MarkerLayer, RouteLayer, LabelLayer, leader lines, and bounds fitting.
+ * Guarantees zero drift under zoom and pan!
+ */
+export function getPlaceMapAnchor(
+  place: Place,
+  transformer: CoordinateTransformer
+): [number, number] | null {
+  const pt = transformer.project(place.lon, place.lat, place);
+  if (!pt) return null;
+
+  const offX = place.markerMapOffsetX ?? place.manualOffsetX ?? 0;
+  const offY = place.markerMapOffsetY ?? place.manualOffsetY ?? 0;
+
+  return [pt[0] + offX, pt[1] + offY];
+}
+
+/**
  * Transformer for D3 Geo Projections (Builtin Basemaps)
  */
 export class D3ProjectionTransformer implements CoordinateTransformer {

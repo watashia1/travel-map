@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import * as topojson from 'topojson-client';
 import {
   Place,
   RouteStyle,
@@ -11,11 +10,58 @@ import {
   BuiltinBasemap
 } from '../types';
 import { createMapProjection, calculateFitToPoints, calculateFitToImage } from './projections';
-import { createCoordinateTransformer } from './transformer';
+import { createCoordinateTransformer, getPlaceMapAnchor } from './transformer';
 import { RouteLayer } from './RouteLayer';
 import { MarkerLayer } from './MarkerLayer';
 import { LabelLayer } from './LabelLayer';
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Crosshair, Image as ImageIcon } from 'lucide-react';
+
+const geoCache = new Map<string, any>();
+
+async function fetchGeoJSON(url: string): Promise<any> {
+  if (geoCache.has(url)) {
+    return geoCache.get(url);
+  }
+  const res = await fetch(url);
+  const data = await res.json();
+  geoCache.set(url, data);
+  return data;
+}
+
+const countryPalette = [
+  '#e9eef5',
+  '#f0eadf',
+  '#e6eee6',
+  '#efe7ed',
+  '#e8edf0',
+  '#f1ecdf'
+];
+
+function stableHash(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function colorForCountry(
+  feature: any,
+  defaultLandColor?: string,
+  enableColorByCountry = true
+): string {
+  if (!enableColorByCountry) return defaultLandColor || '#f1efe8';
+  const key =
+    feature.properties?.ADM0_A3 ||
+    feature.properties?.ISO_A3 ||
+    feature.properties?.ADMIN ||
+    feature.properties?.NAME ||
+    feature.properties?.name ||
+    '';
+  if (!key) return defaultLandColor || '#f1efe8';
+  return countryPalette[stableHash(key) % countryPalette.length];
+}
 
 interface MapCanvasProps {
   places: Place[];
@@ -55,28 +101,53 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1000, height: 600 });
   const [geoFeatures, setGeoFeatures] = useState<any[]>([]);
+  const [admin1Features, setAdmin1Features] = useState<any[]>([]);
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef<{ startX: number; startY: number; initialPanX: number; initialPanY: number } | null>(null);
 
-  // Load world topojson data for builtin basemaps
+  // Load Natural Earth GeoJSON for builtin basemaps (110m for world, 50m for continents)
   useEffect(() => {
-    fetch('./data/world.json')
-      .then(res => res.json())
-      .then(topology => {
-        if (topology.objects && topology.objects.countries) {
-          const countries = (topojson.feature(topology, topology.objects.countries) as any).features;
-          setGeoFeatures(countries || []);
-        } else if (topology.objects && topology.objects.land) {
-          const land = (topojson.feature(topology, topology.objects.land) as any).features;
-          setGeoFeatures(land || []);
-        }
-      })
-      .catch(err => {
-        console.error('Failed to load world.json', err);
-      });
-  }, []);
+    let isMounted = true;
+    if (basemap.type !== 'builtin') {
+      setGeoFeatures([]);
+      setAdmin1Features([]);
+      return;
+    }
 
-  // ResizeObserver for container dimensions
+    if (basemap.region === 'world') {
+      fetchGeoJSON('./data/ne_110m_admin_0_countries.geojson')
+        .then(geojson => {
+          if (isMounted) {
+            setGeoFeatures(geojson.features || []);
+            setAdmin1Features([]);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to load ne_110m_admin_0_countries.geojson', err);
+        });
+    } else {
+      // Continent view: load 50m admin 0 countries + 50m admin 1 lines
+      Promise.all([
+        fetchGeoJSON('./data/ne_50m_admin_0_countries.geojson'),
+        (basemap as BuiltinBasemap).showAdmin1 !== false
+          ? fetchGeoJSON('./data/ne_50m_admin_1_states_provinces_lines.geojson')
+          : Promise.resolve(null)
+      ])
+        .then(([countriesGeo, admin1Geo]) => {
+          if (isMounted) {
+            setGeoFeatures(countriesGeo?.features || []);
+            setAdmin1Features(admin1Geo?.features || []);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to load continent 50m geojson', err);
+        });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [basemap.type, (basemap as BuiltinBasemap).region, (basemap as BuiltinBasemap).showAdmin1]);
   useEffect(() => {
     if (!containerRef.current) return;
     const updateSize = () => {
@@ -122,7 +193,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       places,
       dimensions.width,
       dimensions.height,
-      (lon, lat, p) => transformer.project(lon, lat, p)
+      (lon, lat, p) => getPlaceMapAnchor(p, transformer)
     );
     if (fit) {
       onCameraChange({
@@ -332,20 +403,48 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                 preserveAspectRatio="xMidYMid meet"
               />
             ) : (
-              <g id="countries-layer">
-                {geoFeatures.map((feature, index) => {
-                  const pathStr = pathGenerator(feature);
-                  if (!pathStr) return null;
-                  return (
-                    <path
-                      key={`country-${index}`}
-                      d={pathStr}
-                      fill={(basemap as BuiltinBasemap).landColor || '#f1efe8'}
-                      stroke={(basemap as BuiltinBasemap).borderColor || '#d5d2c8'}
-                      strokeWidth={0.5}
-                    />
-                  );
-                })}
+              <g id="builtin-vector-layer">
+                {/* Admin-0 Countries */}
+                <g id="countries-layer">
+                  {geoFeatures.map((feature, index) => {
+                    const pathStr = pathGenerator(feature);
+                    if (!pathStr) return null;
+                    const fill = colorForCountry(
+                      feature,
+                      (basemap as BuiltinBasemap).landColor,
+                      (basemap as BuiltinBasemap).enableColorByCountry ?? true
+                    );
+                    return (
+                      <path
+                        key={`country-${index}`}
+                        d={pathStr}
+                        fill={fill}
+                        stroke={(basemap as BuiltinBasemap).borderColor || '#cbd5e1'}
+                        strokeWidth={0.5}
+                      />
+                    );
+                  })}
+                </g>
+
+                {/* Admin-1 State/Province Boundaries for Continent View */}
+                {admin1Features.length > 0 && (basemap as BuiltinBasemap).showAdmin1 !== false && (
+                  <g id="admin-1-layer">
+                    {admin1Features.map((feature, index) => {
+                      const pathStr = pathGenerator(feature);
+                      if (!pathStr) return null;
+                      return (
+                        <path
+                          key={`admin1-${index}`}
+                          d={pathStr}
+                          fill="none"
+                          stroke="#cbd5e1"
+                          strokeWidth={0.45}
+                          strokeOpacity={0.55}
+                        />
+                      );
+                    })}
+                  </g>
+                )}
               </g>
             )}
           </g>

@@ -1,7 +1,7 @@
 import React from 'react';
 import * as d3 from 'd3-geo';
 import { Place, RouteStyle } from '../types';
-import { CoordinateTransformer } from './transformer';
+import { CoordinateTransformer, getPlaceMapAnchor } from './transformer';
 
 interface RouteLayerProps {
   places: Place[];
@@ -42,31 +42,15 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
   // Free image basemap does not have spherical coordinates, forbid geodesic
   const isFreeImage = transformer.type === 'free-image';
   const effectiveMode = isFreeImage && style.mode === 'geodesic' ? 'decorative-curve' : style.mode;
-  const zoom = Math.max(cameraZoom, 0.001);
 
   for (const seg of segments) {
     for (let i = 0; i < seg.length - 1; i++) {
       const p1 = seg[i];
       const p2 = seg[i + 1];
 
-      const rawStartPt = transformer.project(p1.lon, p1.lat, p1);
-      const rawEndPt = transformer.project(p2.lon, p2.lat, p2);
-      if (!rawStartPt || !rawEndPt) continue;
-
-      // Scale manual screen offsets to map space according to camera zoom
-      const p1OffX = (p1.manualOffsetX || 0) / zoom;
-      const p1OffY = (p1.manualOffsetY || 0) / zoom;
-      const p2OffX = (p2.manualOffsetX || 0) / zoom;
-      const p2OffY = (p2.manualOffsetY || 0) / zoom;
-
-      const startPt: [number, number] = [
-        rawStartPt[0] + p1OffX,
-        rawStartPt[1] + p1OffY
-      ];
-      const endPt: [number, number] = [
-        rawEndPt[0] + p2OffX,
-        rawEndPt[1] + p2OffY
-      ];
+      const startPt = getPlaceMapAnchor(p1, transformer);
+      const endPt = getPlaceMapAnchor(p2, transformer);
+      if (!startPt || !endPt) continue;
 
       if (effectiveMode === 'straight-screen') {
         pathStrings.push(
@@ -92,12 +76,19 @@ export const RouteLayer: React.FC<RouteLayerProps> = ({
         const numSteps = 24;
         const pts: [number, number][] = [];
 
+        const rawStart = transformer.project(p1.lon, p1.lat, p1) || startPt;
+        const rawEnd = transformer.project(p2.lon, p2.lat, p2) || endPt;
+        const p1OffX = startPt[0] - rawStart[0];
+        const p1OffY = startPt[1] - rawStart[1];
+        const p2OffX = endPt[0] - rawEnd[0];
+        const p2OffY = endPt[1] - rawEnd[1];
+
         for (let s = 0; s <= numSteps; s++) {
           const t = s / numSteps;
           const [lon, lat] = interpolator(t);
           const projected = transformer.project(lon, lat);
           if (projected) {
-            // Blend manual offsets from start to end
+            // Blend map-space offsets from start to end
             const offX = (1 - t) * p1OffX + t * p2OffX;
             const offY = (1 - t) * p1OffY + t * p2OffY;
             pts.push([projected[0] + offX, projected[1] + offY]);

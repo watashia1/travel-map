@@ -99,14 +99,14 @@ export const ProjectPanel: React.FC<ProjectPanelProps> = ({
         <div className="space-y-2">
           {[
             {
-              id: 'galapagos',
-              title: '案例 A：加拉帕戈斯群岛 (内置地形矢量图与仿射标定)',
-              desc: '圣克里斯托瓦尔岛 → 弗雷里安纳岛 → 伊莎贝拉岛 → 圣地亚哥岛'
+              id: 'oceania_island',
+              title: '案例 A：大洋洲与太平洋岛国 (180° 经线自适应)',
+              desc: '悉尼 → 奥克兰 → 楠迪 → 努库阿洛法'
             },
             {
-              id: 'arctic_true',
-              title: '案例 B：北极真实极地航线 (极地等距投影)',
-              desc: '奥斯陆 → 特罗姆瑟 → 朗伊尔城 → 北极点'
+              id: 'antarctica_pole',
+              title: '案例 B：南极极地科考 (南极点立体投影)',
+              desc: '乌斯怀亚 → 长城站 → 阿蒙森-斯科特南极站'
             },
             {
               id: 'antimeridian',
@@ -115,12 +115,12 @@ export const ProjectPanel: React.FC<ProjectPanelProps> = ({
             },
             {
               id: 'spec_v1',
-              title: '案例 D：跨大洲经典探索 (V1 验收样例)',
+              title: '案例 D：跨大洲经典探索 (世界全景)',
               desc: '东京 → 札幌 → 奥斯陆 → 雷克雅未克 → 朗伊尔城'
             },
             {
               id: 'silkroad',
-              title: '经典丝绸之路巡游',
+              title: '经典丝绸之路巡游 (亚洲高精视图)',
               desc: '西安 → 敦煌 → 喀什 → 撒马尔罕 → 伊斯坦布尔 → 罗马'
             }
           ].map(preset => (

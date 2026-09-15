@@ -20,7 +20,11 @@ export interface Place {
   status: 'resolved' | 'ambiguous' | 'unresolved';
   ambiguousCandidates?: PlaceRecord[];
   
-  // Custom manual visual offsets (screen pixels)
+  // Marker visual offset in map-space coordinates (resolves zoom drift)
+  markerMapOffsetX?: number;
+  markerMapOffsetY?: number;
+
+  // Legacy manual visual offsets (screen pixels fallback)
   manualOffsetX?: number;
   manualOffsetY?: number;
   labelOffsetX?: number;
@@ -76,7 +80,15 @@ export type MapProjectionType =
   | 'azimuthalEquidistant'
   | 'stereographic';
 
-export type MapRegionType = 'world' | 'asia' | 'europe' | 'china' | 'japan' | 'arctic';
+export type MapRegionType =
+  | 'world'
+  | 'asia'
+  | 'europe'
+  | 'africa'
+  | 'north-america'
+  | 'south-america'
+  | 'oceania'
+  | 'antarctica';
 
 export interface BuiltinBasemap {
   type: 'builtin';
@@ -86,6 +98,8 @@ export interface BuiltinBasemap {
   landColor: string;
   borderColor: string;
   oceanColor: string;
+  showAdmin1?: boolean;
+  enableColorByCountry?: boolean;
 }
 
 export interface FreeImageBasemap {
@@ -149,7 +163,7 @@ export interface CameraState {
   autoFit?: boolean;
 }
 
-export type OverlayScaleMode = 'screen-fixed' | 'map-scaled';
+export type OverlayScaleMode = 'screen-fixed';
 
 export interface ProjectData {
   version: '2.0';

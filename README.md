@@ -104,6 +104,14 @@ npm run preview
 
 ---
 
+## 🗺 地图数据源与版权说明
+
+- **Basemap data**: [Natural Earth Vector](https://www.naturalearthdata.com/) (Public Domain)
+- **数据集涵盖**：世界 1:110m 陆地国界、各大洲 1:50m 细分国界与省/州一级行政区参照细线。
+- **说明**：Natural Earth 属于 Public Domain 公共领域数据，无商用及使用限制。如用于中国正式出版物、公开宣传品等场景，用户可使用“自定义底图”功能上传自然资源部标准地图服务等已过审地图素材。
+
+---
+
 ## 📄 开源许可证
 
 本项目采用 [MIT 许可证](LICENSE)。

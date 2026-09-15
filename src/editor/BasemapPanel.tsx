@@ -121,23 +121,6 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
 
     if (item.id === 'builtin-world') {
       handleSwitchToBuiltin();
-      return;
-    }
-
-    if (item.id === 'galapagos-topo') {
-      onChangeBasemap({
-        type: 'calibrated-image',
-        assetId: item.id,
-        imageName: item.title,
-        imageWidth: item.imageWidth || 2160,
-        imageHeight: item.imageHeight || 2160,
-        imageUrl: item.assetPath,
-        transform: item.defaultTransform,
-        controlPoints: item.defaultControlPoints || [],
-        errorPx: item.errorPx
-      });
-      onFitImage?.(item.imageWidth, item.imageHeight);
-      setAspectRatioWarning(null);
     }
   };
 
@@ -255,9 +238,7 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
 
         <div className="grid grid-cols-1 gap-1.5">
           {OFFICIAL_BASEMAP_REGISTRY.map(item => {
-            const isSelected =
-              (item.id === 'builtin-world' && basemap.type === 'builtin') ||
-              (item.id === 'galapagos-topo' && (basemap as any).assetId === 'galapagos-topo');
+            const isSelected = item.id === 'builtin-world' && basemap.type === 'builtin';
 
             return (
               <button
@@ -299,6 +280,80 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
       {basemap.type === 'builtin' && (
         <section className="space-y-4">
           <div>
+            <label className="block text-slate-500 mb-1.5 font-medium">聚焦视角预设 (世界 + 七大洲)</label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[
+                { id: 'world', label: '世界' },
+                { id: 'asia', label: '亚洲' },
+                { id: 'europe', label: '欧洲' },
+                { id: 'africa', label: '非洲' },
+                { id: 'north-america', label: '北美洲' },
+                { id: 'south-america', label: '南美洲' },
+                { id: 'oceania', label: '大洋洲' },
+                { id: 'antarctica', label: '南极洲' }
+              ].map(r => (
+                <button
+                  key={r.id}
+                  onClick={() =>
+                    onChangeBasemap({
+                      ...basemap,
+                      region: r.id as MapRegionType,
+                      projection: r.id === 'antarctica' ? 'stereographic' : 'equalEarth'
+                    })
+                  }
+                  className={`py-1.5 px-2 rounded-lg border text-center transition text-xs ${
+                    basemap.region === r.id
+                      ? 'bg-blue-50 border-blue-500 text-blue-600 font-medium'
+                      : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Admin-1 State/Province Boundaries toggle for continents */}
+          {basemap.region !== 'world' && (
+            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+              <div>
+                <div className="font-medium text-slate-800 text-xs">显示省/州一级行政区边界</div>
+                <div className="text-[10px] text-slate-500">在各大洲视图中呈现清晰低对比度省州分界线</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={basemap.showAdmin1 !== false}
+                onChange={e =>
+                  onChangeBasemap({
+                    ...basemap,
+                    showAdmin1: e.target.checked
+                  })
+                }
+                className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4"
+              />
+            </div>
+          )}
+
+          {/* Color by country toggle */}
+          <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+            <div>
+              <div className="font-medium text-slate-800 text-xs">分国色彩对比 (自动低饱和设色)</div>
+              <div className="text-[10px] text-slate-500">相邻国家自动分配不同色块，避免整片陆地混淆</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={basemap.enableColorByCountry ?? true}
+              onChange={e =>
+                onChangeBasemap({
+                  ...basemap,
+                  enableColorByCountry: e.target.checked
+                })
+              }
+              className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4"
+            />
+          </div>
+
+          <div>
             <label className="block text-slate-500 mb-1.5 font-medium">地理投影 (Projection)</label>
             <div className="grid grid-cols-2 gap-1.5">
               {[
@@ -323,37 +378,6 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
                   }`}
                 >
                   {proj.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-slate-500 mb-1.5 font-medium">聚焦视角预设</label>
-            <div className="grid grid-cols-3 gap-1.5">
-              {[
-                { id: 'world', label: '世界全景' },
-                { id: 'asia', label: '亚洲' },
-                { id: 'europe', label: '欧洲' },
-                { id: 'china', label: '中国' },
-                { id: 'japan', label: '日本' },
-                { id: 'arctic', label: '北极极区' }
-              ].map(r => (
-                <button
-                  key={r.id}
-                  onClick={() =>
-                    onChangeBasemap({
-                      ...basemap,
-                      region: r.id as MapRegionType
-                    })
-                  }
-                  className={`py-1.5 px-2 rounded-lg border text-center transition ${
-                    basemap.region === r.id
-                      ? 'bg-blue-50 border-blue-500 text-blue-600 font-medium'
-                      : 'border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {r.label}
                 </button>
               ))}
             </div>

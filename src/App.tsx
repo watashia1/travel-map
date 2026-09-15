@@ -199,7 +199,15 @@ export const App: React.FC = () => {
       ...prev,
       places: prev.places.map(p =>
         p.id === placeId
-          ? { ...p, manualOffsetX: 0, manualOffsetY: 0, labelOffsetX: 12, labelOffsetY: -12 }
+          ? {
+              ...p,
+              markerMapOffsetX: 0,
+              markerMapOffsetY: 0,
+              manualOffsetX: 0,
+              manualOffsetY: 0,
+              labelOffsetX: 12,
+              labelOffsetY: -12
+            }
           : p
       )
     }));
@@ -213,14 +221,22 @@ export const App: React.FC = () => {
   const handleMarkerDragMove = useCallback((placeId: string, x: number, y: number) => {
     setTransient(prev => ({
       ...prev,
-      places: prev.places.map(p => (p.id === placeId ? { ...p, manualOffsetX: x, manualOffsetY: y } : p))
+      places: prev.places.map(p =>
+        p.id === placeId
+          ? { ...p, markerMapOffsetX: x, markerMapOffsetY: y, manualOffsetX: x, manualOffsetY: y }
+          : p
+      )
     }));
   }, [setTransient]);
 
   const handleMarkerDragEnd = useCallback((placeId: string, x: number, y: number) => {
     commitTransaction(prev => ({
       ...prev,
-      places: prev.places.map(p => (p.id === placeId ? { ...p, manualOffsetX: x, manualOffsetY: y } : p))
+      places: prev.places.map(p =>
+        p.id === placeId
+          ? { ...p, markerMapOffsetX: x, markerMapOffsetY: y, manualOffsetX: x, manualOffsetY: y }
+          : p
+      )
     }));
   }, [commitTransaction]);
 
@@ -240,12 +256,12 @@ export const App: React.FC = () => {
 
   // Fit view to entire image
   const handleFitToImage = useCallback((w?: number, h?: number) => {
-    const imgW = w || (project.basemap as any).imageWidth || 1000;
-    const imgH = h || (project.basemap as any).imageHeight || 600;
-    const fit = calculateFitToImage(imgW, imgH, 1000, 600);
+    const imgW = w || (project.basemap as any).imageWidth || 1200;
+    const imgH = h || (project.basemap as any).imageHeight || 800;
+    const fit = calculateFitToImage(imgW, imgH, imgW, imgH);
     setProject(prev => ({
       ...prev,
-      camera: fit
+      camera: { zoom: 1, panX: 0, panY: 0 }
     }));
   }, [project.basemap, setProject]);
 
@@ -346,25 +362,12 @@ export const App: React.FC = () => {
     let presetText = '';
     let newBasemap: BasemapConfig = defaultBasemap;
 
-    if (presetId === 'galapagos') {
-      presetText = `圣克里斯托瓦尔岛\n弗雷里安纳岛\n伊莎贝拉岛\n圣地亚哥岛`;
-      const galapagosItem = OFFICIAL_BASEMAP_REGISTRY.find(o => o.id === 'galapagos-topo');
-      if (galapagosItem) {
-        newBasemap = {
-          type: 'calibrated-image',
-          assetId: galapagosItem.id,
-          imageName: galapagosItem.title,
-          imageWidth: galapagosItem.imageWidth,
-          imageHeight: galapagosItem.imageHeight,
-          imageUrl: galapagosItem.assetPath,
-          transform: galapagosItem.defaultTransform,
-          controlPoints: galapagosItem.defaultControlPoints || [],
-          errorPx: galapagosItem.errorPx
-        };
-      }
-    } else if (presetId === 'arctic_true') {
-      presetText = `奥斯陆\n特罗姆瑟\n朗伊尔城\n89.9, 0 | 北极点`;
-      newBasemap = { ...defaultBasemap, projection: 'azimuthalEquidistant', region: 'arctic' };
+    if (presetId === 'oceania_island') {
+      presetText = `悉尼\n奥克兰\n楠迪\n努库阿洛法`;
+      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'oceania', showAdmin1: true };
+    } else if (presetId === 'antarctica_pole') {
+      presetText = `乌斯怀亚\n长城站\n阿蒙森-斯科特南极站`;
+      newBasemap = { ...defaultBasemap, projection: 'stereographic', region: 'antarctica', showAdmin1: false };
     } else if (presetId === 'antimeridian') {
       presetText = `东京\n安克雷奇`;
       newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'world' };
@@ -373,20 +376,15 @@ export const App: React.FC = () => {
       newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'world' };
     } else if (presetId === 'silkroad') {
       presetText = `西安\n敦煌\n喀什\n撒马尔罕\n伊斯坦布尔\n罗马`;
-      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'asia' };
+      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'asia', showAdmin1: true };
     }
 
     const parsed = await parseInputText(presetText);
-    let initialCam = defaultCamera;
-    if (presetId === 'galapagos') {
-      initialCam = calculateFitToImage(2160, 2160, 1000, 600);
-    }
-
     setProject(prev => ({
       ...prev,
       places: parsed,
       basemap: newBasemap,
-      camera: initialCam
+      camera: defaultCamera
     }));
     setActiveTab('places');
   };
