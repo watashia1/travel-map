@@ -21,7 +21,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
     setIsExporting(true);
     try {
       if (exportFormat === 'svg') {
-        exportMapAsSVG('travel-map-svg', `travel-map-${Date.now()}.svg`);
+        await exportMapAsSVG('travel-map-svg', `travel-map-${Date.now()}.svg`, transparentRouteOnly);
       } else {
         let scale = 2;
         let cWidth: number | undefined = undefined;
@@ -56,7 +56,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
             <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
               <Download size={18} />
             </div>
-            <h3 className="text-base font-semibold text-slate-800">导出旅行地图</h3>
+            <h3 className="text-base font-semibold text-slate-800">导出旅行路线地图</h3>
           </div>
           <button
             onClick={onClose}
@@ -105,69 +105,67 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
 
           {/* Resolution Options (for PNG) */}
           {exportFormat === 'png' && (
-            <>
-              <div>
-                <label className="block font-medium text-slate-800 mb-1.5">输出清晰度</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: '2x', title: '2× 超清 (推荐)', desc: '~2400px' },
-                    { id: '4x', title: '4× 印刷级', desc: '~4800px' },
-                    { id: 'custom', title: '自定义宽度', desc: '海报大图' }
-                  ].map(r => (
-                    <button
-                      key={r.id}
-                      onClick={() => setResolutionMode(r.id as any)}
-                      className={`p-2 rounded-lg border text-center transition ${
-                        resolutionMode === r.id
-                          ? 'border-blue-500 bg-blue-50/50 text-blue-700 font-medium'
-                          : 'border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div>{r.title}</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">{r.desc}</div>
-                    </button>
-                  ))}
+            <div>
+              <label className="block font-medium text-slate-800 mb-1.5">输出清晰度</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: '2x', title: '2× 超清 (推荐)', desc: '~2400px' },
+                  { id: '4x', title: '4× 印刷级', desc: '~4800px' },
+                  { id: 'custom', title: '自定义宽度', desc: '海报大图' }
+                ].map(r => (
+                  <button
+                    key={r.id}
+                    onClick={() => setResolutionMode(r.id as any)}
+                    className={`p-2 rounded-lg border text-center transition ${
+                      resolutionMode === r.id
+                        ? 'border-blue-500 bg-blue-50/50 text-blue-700 font-medium'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div>{r.title}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{r.desc}</div>
+                  </button>
+                ))}
+              </div>
+
+              {resolutionMode === 'custom' && (
+                <div className="mt-2 flex items-center space-x-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                  <span className="text-slate-600">目标宽度：</span>
+                  <input
+                    type="number"
+                    min={1000}
+                    max={10000}
+                    step={500}
+                    value={customWidth}
+                    onChange={e => setCustomWidth(parseInt(e.target.value) || 6000)}
+                    className="w-24 px-2 py-1 bg-white border border-slate-300 rounded font-mono text-center"
+                  />
+                  <span className="text-slate-500">像素 (px)</span>
+                  <span className="text-[10px] text-slate-400 ml-auto">最高支持 10000px</span>
                 </div>
-
-                {resolutionMode === 'custom' && (
-                  <div className="mt-2 flex items-center space-x-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
-                    <span className="text-slate-600">目标宽度：</span>
-                    <input
-                      type="number"
-                      min={1000}
-                      max={10000}
-                      step={500}
-                      value={customWidth}
-                      onChange={e => setCustomWidth(parseInt(e.target.value) || 6000)}
-                      className="w-24 px-2 py-1 bg-white border border-slate-300 rounded font-mono text-center"
-                    />
-                    <span className="text-slate-500">像素 (px)</span>
-                    <span className="text-[10px] text-slate-400 ml-auto">最高支持 10000px</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Transparent route only toggle */}
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-start space-x-2.5">
-                <input
-                  type="checkbox"
-                  id="transparent-toggle"
-                  checked={transparentRouteOnly}
-                  onChange={e => setTransparentRouteOnly(e.target.checked)}
-                  className="rounded text-blue-600 focus:ring-blue-500 mt-0.5 h-4 w-4"
-                />
-                <label htmlFor="transparent-toggle" className="cursor-pointer">
-                  <div className="font-medium text-slate-800 flex items-center">
-                    <Layers size={13} className="mr-1 text-slate-500" />
-                    仅导出路线图层 (背景透明)
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
-                    仅保留红点标记、地名文字与路线连线，底图全透明，可直接置入 Photoshop / Figma / 手绘地图底图进行排版。
-                  </div>
-                </label>
-              </div>
-            </>
+              )}
+            </div>
           )}
+
+          {/* Transparent route only toggle */}
+          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-start space-x-2.5">
+            <input
+              type="checkbox"
+              id="transparent-toggle"
+              checked={transparentRouteOnly}
+              onChange={e => setTransparentRouteOnly(e.target.checked)}
+              className="rounded text-blue-600 focus:ring-blue-500 mt-0.5 h-4 w-4"
+            />
+            <label htmlFor="transparent-toggle" className="cursor-pointer">
+              <div className="font-medium text-slate-800 flex items-center">
+                <Layers size={13} className="mr-1 text-slate-500" />
+                仅导出路线与标记图层 (背景透明)
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">
+                底图全透明，仅保留红点标记、地名文字与路线连线，可直接作为图层置入 Photoshop / Figma / 手绘底图进行二次排版。
+              </div>
+            </label>
+          </div>
         </div>
 
         {/* Footer */}

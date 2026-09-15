@@ -25,23 +25,39 @@ export async function exportMapAsPNG(
     filename = 'travel-map.png'
   } = options;
 
-  // Clone SVG
   const clonedSvg = originalSvg.cloneNode(true) as SVGSVGElement;
   clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clonedSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 
-  // Handle transparent route only mode
   if (transparentRouteOnly) {
-    const ocean = clonedSvg.querySelector('#ocean-background');
-    if (ocean) ocean.remove();
-    const countries = clonedSvg.querySelector('#countries-layer');
-    if (countries) countries.remove();
+    clonedSvg.querySelector('#ocean-background')?.remove();
+    clonedSvg.querySelector('#basemap-layer')?.remove();
+  } else {
+    // Inlining blob URLs if any image exists
+    const imgEl = clonedSvg.querySelector('#basemap-layer image') as SVGImageElement | null;
+    if (imgEl) {
+      const href = imgEl.getAttribute('href') || imgEl.getAttribute('xlink:href');
+      if (href && href.startsWith('blob:')) {
+        try {
+          const res = await fetch(href);
+          const blob = await res.blob();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          imgEl.setAttribute('href', dataUrl);
+        } catch (e) {
+          console.warn('Could not convert blob URL to data URL for PNG export', e);
+        }
+      }
+    }
   }
 
   const baseWidth = originalSvg.viewBox.baseVal.width || originalSvg.clientWidth || 1200;
   const baseHeight = originalSvg.viewBox.baseVal.height || originalSvg.clientHeight || 800;
 
-  // Determine output resolution
   let targetWidth = baseWidth * scale;
   let targetHeight = baseHeight * scale;
 
@@ -77,7 +93,6 @@ export async function exportMapAsPNG(
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
-        // Draw image
         ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
         URL.revokeObjectURL(url);
 

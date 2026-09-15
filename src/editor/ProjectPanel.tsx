@@ -6,7 +6,7 @@ interface ProjectPanelProps {
   projectData: ProjectData;
   onImportProject: (data: ProjectData) => void;
   onRequestReset: () => void;
-  onLoadPreset: (presetName: string) => void;
+  onLoadPreset: (presetId: string) => void;
 }
 
 export const ProjectPanel: React.FC<ProjectPanelProps> = ({
@@ -23,7 +23,7 @@ export const ProjectPanel: React.FC<ProjectPanelProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `travel-map-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `travel-map-v2-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -54,10 +54,10 @@ export const ProjectPanel: React.FC<ProjectPanelProps> = ({
       {/* 1. Project Backup / Restore */}
       <section className="space-y-3">
         <h4 className="font-semibold text-slate-900 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200">
-          项目存档与迁移
+          项目工程存档与还原
         </h4>
         <p className="text-slate-500 leading-relaxed text-[11px]">
-          项目数据会实时自动保存在您的浏览器本地。您也可以将项目导出为 JSON 文件备份，或在其他设备上导入恢复全部位置与微调设置。
+          项目数据实时防抖暂存于浏览器，包含缩放平移视口 (Camera) 与底图设置。导出 JSON 文件可在任何电脑上 100% 恢复当前画面。
         </p>
 
         <div className="grid grid-cols-2 gap-2 pt-1">
@@ -74,7 +74,7 @@ export const ProjectPanel: React.FC<ProjectPanelProps> = ({
             className="p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-800 transition flex items-center justify-center space-x-1.5 shadow-sm"
           >
             <Upload size={14} className="text-emerald-600" />
-            <span className="font-medium">导入项目文件</span>
+            <span className="font-medium">导入工程文件</span>
           </button>
           <input
             ref={fileInputRef}
@@ -86,32 +86,37 @@ export const ProjectPanel: React.FC<ProjectPanelProps> = ({
         </div>
       </section>
 
-      {/* 2. Route Presets */}
+      {/* 2. Official Acceptance Cases & Route Presets */}
       <section className="space-y-3">
         <h4 className="font-semibold text-slate-900 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200">
-          路线预设灵感
+          规范验收案例与预设路线
         </h4>
         <div className="space-y-2">
           {[
             {
-              id: 'arctic',
-              title: '官方验收：跨洲与北极探索',
+              id: 'galapagos',
+              title: '案例 A：加拉帕戈斯群岛 (自适应与高密避让)',
+              desc: '圣克里斯托瓦尔岛 → 弗雷里安纳岛 → 伊莎贝拉岛 → 圣地亚哥岛'
+            },
+            {
+              id: 'arctic_true',
+              title: '案例 B：北极真实极地航线 (极地等距投影)',
+              desc: '奥斯陆 → 特罗姆瑟 → 朗伊尔城 → 北极点'
+            },
+            {
+              id: 'antimeridian',
+              title: '案例 C：跨 180° 经线安全测地线',
+              desc: '东京 → 安克雷奇 (球面测地线不横穿大陆)'
+            },
+            {
+              id: 'spec_v1',
+              title: '案例 D：跨大洲经典探索 (V1 验收样例)',
               desc: '东京 → 札幌 → 奥斯陆 → 雷克雅未克 → 朗伊尔城'
             },
             {
               id: 'silkroad',
-              title: '千年丝绸之路经典',
+              title: '经典丝绸之路巡游',
               desc: '西安 → 敦煌 → 喀什 → 撒马尔罕 → 伊斯坦布尔 → 罗马'
-            },
-            {
-              id: 'japan',
-              title: '日本黄金路线巡游',
-              desc: '东京 → 箱根 → 富士山 → 京都 → 奈良 → 大阪'
-            },
-            {
-              id: 'nordic',
-              title: '北欧极光与极夜追寻',
-              desc: '赫尔辛基 → 罗瓦涅米 → 特罗姆瑟 → 朗伊尔城'
             }
           ].map(preset => (
             <button

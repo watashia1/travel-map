@@ -10,7 +10,8 @@ import {
   ChevronDown,
   RotateCcw,
   Sparkles,
-  Plus
+  Plus,
+  GripVertical
 } from 'lucide-react';
 import { parseCoordinateLine } from '../parser/coordinates';
 
@@ -39,6 +40,8 @@ export const PlaceList: React.FC<PlaceListProps> = ({
   const [inputText, setInputText] = useState('');
   const [editingCoordId, setEditingCoordId] = useState<string | null>(null);
   const [manualCoordInput, setManualCoordInput] = useState('');
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleParseClick = () => {
     if (!inputText.trim()) return;
@@ -55,9 +58,51 @@ export const PlaceList: React.FC<PlaceListProps> = ({
     updated[index] = updated[targetIndex];
     updated[targetIndex] = temp;
 
-    // Refresh order index
     const reindexed = updated.map((p, idx) => ({ ...p, order: idx }));
     onReorderPlaces(reindexed);
+  };
+
+  // HTML5 Drag and Drop Reordering
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const updated = [...places];
+    const [movedItem] = updated.splice(draggedIndex, 1);
+    updated.splice(targetIndex, 0, movedItem);
+
+    const reindexed = updated.map((p, idx) => ({ ...p, order: idx }));
+    onReorderPlaces(reindexed);
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   const handleManualCoordSubmit = (placeId: string) => {
@@ -130,7 +175,7 @@ export const PlaceList: React.FC<PlaceListProps> = ({
       {/* Places List Header */}
       <div className="px-4 py-2 bg-slate-50 border-b border-slate-200 flex justify-between items-center text-xs text-slate-500">
         <span>已添加地点 ({places.length})</span>
-        <span className="text-[11px]">按顺序自动连线 · 可拖动排序</span>
+        <span className="text-[11px]">长按抓手自由拖动排序 · 路线自动连线</span>
       </div>
 
       {/* Places Scroll Area */}
@@ -148,10 +193,21 @@ export const PlaceList: React.FC<PlaceListProps> = ({
               (place.labelOffsetX && place.labelOffsetX !== 12) ||
               (place.labelOffsetY && place.labelOffsetY !== -12);
 
+            const isDragged = draggedIndex === index;
+            const isDragOver = dragOverIndex === index;
+
             return (
               <div
                 key={place.id}
+                draggable
+                onDragStart={e => handleDragStart(e, index)}
+                onDragOver={e => handleDragOver(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={e => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
                 className={`p-2.5 rounded-lg border transition bg-white shadow-sm hover:shadow ${
+                  isDragged ? 'opacity-40 border-dashed border-blue-400' : ''
+                } ${isDragOver ? 'border-t-2 border-t-blue-600 bg-blue-50/20' : ''} ${
                   place.status === 'unresolved'
                     ? 'border-amber-300 bg-amber-50/30'
                     : place.status === 'ambiguous'
@@ -160,8 +216,12 @@ export const PlaceList: React.FC<PlaceListProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  {/* Left: Sequence Number and Place Name */}
-                  <div className="flex items-center space-x-2.5 flex-1 min-w-0">
+                  {/* Left: Drag Handle, Sequence Number and Place Name */}
+                  <div className="flex items-center space-x-2 flex-1 min-w-0">
+                    <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-600 p-0.5 shrink-0">
+                      <GripVertical size={15} />
+                    </div>
+
                     <span className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-100 text-slate-700 text-xs font-bold shrink-0">
                       {index + 1}
                     </span>
@@ -173,13 +233,19 @@ export const PlaceList: React.FC<PlaceListProps> = ({
                         </span>
 
                         {place.status === 'resolved' && (
-                          <span title="已成功定位"><CheckCircle2 size={13} className="text-emerald-500 shrink-0" /></span>
+                          <span title="已成功定位">
+                            <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                          </span>
                         )}
                         {place.status === 'ambiguous' && (
-                          <span title="有多处同名地点"><HelpCircle size={13} className="text-blue-500 shrink-0" /></span>
+                          <span title="有多处同名地点">
+                            <HelpCircle size={13} className="text-blue-500 shrink-0" />
+                          </span>
                         )}
                         {place.status === 'unresolved' && (
-                          <span title="未在本地数据库中查找到"><AlertTriangle size={13} className="text-amber-500 shrink-0" /></span>
+                          <span title="未在本地数据库中查找到">
+                            <AlertTriangle size={13} className="text-amber-500 shrink-0" />
+                          </span>
                         )}
                       </div>
 

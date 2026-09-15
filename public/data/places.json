@@ -2552,5 +2552,78 @@
     "lat": 31.6295,
     "lon": -7.9811,
     "country": "摩洛哥"
+  },
+  {
+    "name": "San Cristóbal Island",
+    "displayName": "圣克里斯托瓦尔岛",
+    "aliases": [
+      "圣克里斯托瓦尔岛",
+      "San Cristóbal",
+      "San Cristobal"
+    ],
+    "lat": -0.9022,
+    "lon": -89.4314,
+    "country": "厄瓜多尔"
+  },
+  {
+    "name": "Floreana Island",
+    "displayName": "弗雷里安纳岛",
+    "aliases": [
+      "弗雷里安纳岛",
+      "Floreana",
+      "Santa María"
+    ],
+    "lat": -1.2975,
+    "lon": -90.4356,
+    "country": "厄瓜多尔"
+  },
+  {
+    "name": "Isabela Island",
+    "displayName": "伊莎贝拉岛",
+    "aliases": [
+      "伊莎贝拉岛",
+      "Isabela",
+      "Isla Isabela"
+    ],
+    "lat": -0.8293,
+    "lon": -91.1349,
+    "country": "厄瓜多尔"
+  },
+  {
+    "name": "Santiago Island",
+    "displayName": "圣地亚哥岛",
+    "aliases": [
+      "圣地亚哥岛",
+      "Santiago",
+      "Isla Santiago",
+      "San Salvador"
+    ],
+    "lat": -0.25,
+    "lon": -90.7,
+    "country": "厄瓜多尔"
+  },
+  {
+    "name": "Galápagos Islands",
+    "displayName": "加拉帕戈斯群岛",
+    "aliases": [
+      "加拉帕戈斯群岛",
+      "加拉帕戈斯",
+      "Galapagos"
+    ],
+    "lat": -0.75,
+    "lon": -90.5,
+    "country": "厄瓜多尔"
+  },
+  {
+    "name": "North Pole",
+    "displayName": "北极点",
+    "aliases": [
+      "北极点",
+      "North Pole",
+      "北极"
+    ],
+    "lat": 89.9999,
+    "lon": 0,
+    "country": "北冰洋"
   }
 ]

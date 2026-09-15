@@ -1,35 +1,57 @@
 import React, { useState, useRef } from 'react';
-import * as d3 from 'd3-geo';
-import { Place, MarkerStyle } from '../types';
+import { Place, MarkerStyle, CameraState, OverlayScaleMode } from '../types';
+import { CoordinateTransformer } from './transformer';
 
 interface MarkerLayerProps {
   places: Place[];
-  projection: d3.GeoProjection;
+  transformer: CoordinateTransformer;
   style: MarkerStyle;
-  onUpdatePlaceOffset: (placeId: string, manualOffsetX: number, manualOffsetY: number) => void;
+  camera: CameraState;
+  canvasWidth: number;
+  canvasHeight: number;
+  scaleMode?: OverlayScaleMode;
+  onDragStart: () => void;
+  onDragMove: (placeId: string, manualOffsetX: number, manualOffsetY: number) => void;
+  onDragEnd: (placeId: string, manualOffsetX: number, manualOffsetY: number) => void;
 }
 
 export const MarkerLayer: React.FC<MarkerLayerProps> = ({
   places,
-  projection,
+  transformer,
   style,
-  onUpdatePlaceOffset
+  camera,
+  canvasWidth,
+  canvasHeight,
+  scaleMode = 'screen-fixed',
+  onDragStart,
+  onDragMove,
+  onDragEnd
 }) => {
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const dragStartRef = useRef<{ startX: number; startY: number; initialOffsetX: number; initialOffsetY: number } | null>(null);
+  const dragStartRef = useRef<{
+    startX: number;
+    startY: number;
+    initialOffsetX: number;
+    initialOffsetY: number;
+    lastX: number;
+    lastY: number;
+  } | null>(null);
 
-  const validPlaces = places.filter(p => p.status === 'resolved');
+  const validPlaces = places.filter(p => p.status === 'resolved' && !p.hideMarker);
 
   const handlePointerDown = (e: React.PointerEvent, place: Place) => {
     e.stopPropagation();
     (e.target as Element).setPointerCapture(e.pointerId);
 
+    onDragStart();
     setDraggingId(place.id);
     dragStartRef.current = {
       startX: e.clientX,
       startY: e.clientY,
       initialOffsetX: place.manualOffsetX || 0,
-      initialOffsetY: place.manualOffsetY || 0
+      initialOffsetY: place.manualOffsetY || 0,
+      lastX: place.manualOffsetX || 0,
+      lastY: place.manualOffsetY || 0
     };
   };
 
@@ -37,47 +59,65 @@ export const MarkerLayer: React.FC<MarkerLayerProps> = ({
     if (draggingId !== placeId || !dragStartRef.current) return;
     const dx = e.clientX - dragStartRef.current.startX;
     const dy = e.clientY - dragStartRef.current.startY;
+
     const newX = Math.round(dragStartRef.current.initialOffsetX + dx);
     const newY = Math.round(dragStartRef.current.initialOffsetY + dy);
+    dragStartRef.current.lastX = newX;
+    dragStartRef.current.lastY = newY;
 
-    onUpdatePlaceOffset(placeId, newX, newY);
+    onDragMove(placeId, newX, newY);
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
+  const handlePointerUp = (e: React.PointerEvent, placeId: string) => {
     if (draggingId) {
       try {
         (e.target as Element).releasePointerCapture(e.pointerId);
-      } catch {
-        // Ignore if pointer not captured
+      } catch {}
+
+      if (dragStartRef.current) {
+        onDragEnd(placeId, dragStartRef.current.lastX, dragStartRef.current.lastY);
       }
       setDraggingId(null);
       dragStartRef.current = null;
     }
   };
 
+  const { zoom, panX, panY } = camera;
+
   return (
     <g id="markers-layer">
       {validPlaces.map((place, idx) => {
-        const coords = projection([place.lon, place.lat]);
-        if (!coords) return null;
+        const pt = transformer.project(place.lon, place.lat, place);
+        if (!pt) return null;
 
-        const cx = coords[0] + (place.manualOffsetX || 0);
-        const cy = coords[1] + (place.manualOffsetY || 0);
+        // Apply camera transformation to map coordinate to get screen position
+        let screenX: number;
+        let screenY: number;
+
+        if (scaleMode === 'screen-fixed') {
+          screenX = (pt[0] - canvasWidth / 2) * zoom + canvasWidth / 2 + panX + (place.manualOffsetX || 0);
+          screenY = (pt[1] - canvasHeight / 2) * zoom + canvasHeight / 2 + panY + (place.manualOffsetY || 0);
+        } else {
+          // Map-scaled
+          screenX = pt[0] + (place.manualOffsetX || 0);
+          screenY = pt[1] + (place.manualOffsetY || 0);
+        }
+
         const r = style.size;
         const isDragging = draggingId === place.id;
-        const orderNum = idx + 1;
+        const orderNum = place.order !== undefined ? place.order + 1 : idx + 1;
 
         return (
           <g
-            key={place.id}
-            transform={`translate(${cx}, ${cy})`}
+            key={`marker-${place.id}`}
+            transform={`translate(${screenX.toFixed(2)}, ${screenY.toFixed(2)})`}
             className="cursor-grab active:cursor-grabbing select-none"
             onPointerDown={e => handlePointerDown(e, place)}
             onPointerMove={e => handlePointerMove(e, place.id)}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
+            onPointerUp={e => handlePointerUp(e, place.id)}
+            onPointerCancel={e => handlePointerUp(e, place.id)}
           >
-            {/* Expanded invisible hit area for easy mouse grabbing */}
+            {/* Expanded hit target */}
             <circle r={Math.max(r + 8, 14)} fill="transparent" />
 
             {style.type === 'ring' && (
@@ -90,7 +130,6 @@ export const MarkerLayer: React.FC<MarkerLayerProps> = ({
               />
             )}
 
-            {/* Main marker body */}
             <circle
               r={r}
               fill={style.color}
@@ -99,7 +138,6 @@ export const MarkerLayer: React.FC<MarkerLayerProps> = ({
               className={isDragging ? 'filter drop-shadow-md' : ''}
             />
 
-            {/* Inner dot or number */}
             {style.type === 'numbered' ? (
               <text
                 textAnchor="middle"
@@ -112,15 +150,13 @@ export const MarkerLayer: React.FC<MarkerLayerProps> = ({
                 {orderNum}
               </text>
             ) : style.type === 'ring' ? (
-              <circle r={Math.max(2, r * 0.4)} fill="#ffffff" pointerEvents="none" />
+              <circle r={Math.max(2, r * 0.35)} fill="#ffffff" pointerEvents="none" />
             ) : null}
 
-            {/* Small indicator if manually offset */}
-            {(place.manualOffsetX || place.manualOffsetY) ? (
-              <title>{`${place.displayName} (已微调: dx=${place.manualOffsetX}, dy=${place.manualOffsetY})`}</title>
-            ) : (
-              <title>{`${place.displayName} (${place.lat.toFixed(4)}, ${place.lon.toFixed(4)})`}</title>
-            )}
+            <title>
+              {place.displayName}
+              {place.manualOffsetX || place.manualOffsetY ? ` (微调: dx=${place.manualOffsetX}, dy=${place.manualOffsetY})` : ''}
+            </title>
           </g>
         );
       })}

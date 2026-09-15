@@ -1,7 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { ProjectData, Place, PlaceRecord, RouteStyle, MarkerStyle, LabelStyle, MapConfig } from './types';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  ProjectData,
+  Place,
+  PlaceRecord,
+  RouteStyle,
+  MarkerStyle,
+  LabelStyle,
+  BasemapConfig,
+  CameraState,
+  OverlayScaleMode
+} from './types';
 import { useHistory } from './editor/useHistory';
 import { PlaceList } from './editor/PlaceList';
+import { BasemapPanel } from './editor/BasemapPanel';
 import { StylePanel } from './editor/StylePanel';
 import { ProjectPanel } from './editor/ProjectPanel';
 import { MapCanvas } from './map/MapCanvas';
@@ -9,8 +20,10 @@ import { ExportModal } from './export/ExportModal';
 import { ConfirmModal } from './editor/ConfirmModal';
 import { AmbiguityModal } from './editor/AmbiguityModal';
 import { parseInputText, loadPlacesDatabase } from './parser/placeSearch';
+import { getImageObjectUrl } from './map/storage/imageStore';
 import {
   MapPin,
+  Map as MapIcon,
   Sliders,
   FolderKanban,
   Undo2,
@@ -19,10 +32,11 @@ import {
   Plane
 } from 'lucide-react';
 
-const STORAGE_KEY = 'travel_map_project_v1';
+const STORAGE_KEY = 'travel_map_project_v2';
 
 const defaultRouteStyle: RouteStyle = {
   type: 'curved',
+  mode: 'geodesic',
   strokeColor: '#e63946',
   strokeWidth: 2.5,
   strokeOpacity: 0.9,
@@ -42,10 +56,13 @@ const defaultLabelStyle: LabelStyle = {
   fontSize: 12,
   color: '#1e293b',
   showHalo: true,
-  fontWeight: 'medium'
+  fontWeight: 'medium',
+  autoAvoidCollisions: true
 };
 
-const defaultMapConfig: MapConfig = {
+const defaultBasemap: BasemapConfig = {
+  type: 'builtin',
+  mapId: 'world',
   projection: 'equalEarth',
   region: 'world',
   landColor: '#f1efe8',
@@ -53,50 +70,77 @@ const defaultMapConfig: MapConfig = {
   oceanColor: '#ffffff'
 };
 
+const defaultCamera: CameraState = {
+  zoom: 1,
+  panX: 0,
+  panY: 0
+};
+
 const initialProject: ProjectData = {
-  version: '1.0',
+  version: '2.0',
   title: '我的旅行路线',
   places: [],
+  basemap: defaultBasemap,
+  camera: defaultCamera,
   routeStyle: defaultRouteStyle,
   markerStyle: defaultMarkerStyle,
   labelStyle: defaultLabelStyle,
-  mapConfig: defaultMapConfig
+  overlayScaleMode: 'screen-fixed'
 };
 
 export const App: React.FC = () => {
-  const { state: project, set: setProject, undo, redo, canUndo, canRedo } = useHistory<ProjectData>(() => {
+  const {
+    state: project,
+    set: setProject,
+    beginTransaction,
+    setTransient,
+    commitTransaction,
+    undo,
+    redo,
+    canUndo,
+    canRedo
+  } = useHistory<ProjectData>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.places)) {
-          return parsed;
+          return {
+            ...initialProject,
+            ...parsed,
+            basemap: parsed.basemap || defaultBasemap,
+            camera: parsed.camera || defaultCamera
+          };
         }
       }
-    } catch {
-      // Ignore
-    }
+    } catch {}
     return initialProject;
-  });
+  }, STORAGE_KEY);
 
-  const [activeTab, setActiveTab] = useState<'places' | 'style' | 'project'>('places');
+  const [activeTab, setActiveTab] = useState<'places' | 'basemap' | 'style' | 'project'>('places');
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const [ambiguousPlace, setAmbiguousPlace] = useState<{ id: string; name: string; candidates: PlaceRecord[] } | null>(null);
+  const [pickingPlaceId, setPickingPlaceId] = useState<string | null>(null);
 
   // Preload places database on startup
   useEffect(() => {
     loadPlacesDatabase();
   }, []);
 
-  // Save to localStorage whenever project changes
+  // Restore image url from IndexedDB if basemap is custom image
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
-    } catch (e) {
-      console.warn('Failed to save to localStorage', e);
+    if (project.basemap.type !== 'builtin' && (project.basemap as any).assetId && !(project.basemap as any).imageUrl) {
+      getImageObjectUrl((project.basemap as any).assetId).then(url => {
+        if (url) {
+          setProject(prev => ({
+            ...prev,
+            basemap: { ...prev.basemap, imageUrl: url } as any
+          }));
+        }
+      });
     }
-  }, [project]);
+  }, [project.basemap, setProject]);
 
   // Initial load sample preset if first time empty
   useEffect(() => {
@@ -111,7 +155,7 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Handlers for place editing
+  // Batch input update
   const handleBatchUpdate = async (inputText: string) => {
     const newPlaces = await parseInputText(inputText, project.places);
     setProject(prev => ({
@@ -145,18 +189,50 @@ export const App: React.FC = () => {
     }));
   };
 
-  const handleUpdatePlaceOffset = (placeId: string, x: number, y: number) => {
-    setProject(prev => ({
+  // Transactional Dragging Handlers
+  const handleDragStart = useCallback(() => {
+    beginTransaction();
+  }, [beginTransaction]);
+
+  const handleMarkerDragMove = useCallback((placeId: string, x: number, y: number) => {
+    setTransient(prev => ({
       ...prev,
       places: prev.places.map(p => (p.id === placeId ? { ...p, manualOffsetX: x, manualOffsetY: y } : p))
     }));
-  };
+  }, [setTransient]);
 
-  const handleUpdateLabelOffset = (placeId: string, x: number, y: number) => {
-    setProject(prev => ({
+  const handleMarkerDragEnd = useCallback((placeId: string, x: number, y: number) => {
+    commitTransaction(prev => ({
+      ...prev,
+      places: prev.places.map(p => (p.id === placeId ? { ...p, manualOffsetX: x, manualOffsetY: y } : p))
+    }));
+  }, [commitTransaction]);
+
+  const handleLabelDragMove = useCallback((placeId: string, x: number, y: number) => {
+    setTransient(prev => ({
       ...prev,
       places: prev.places.map(p => (p.id === placeId ? { ...p, labelOffsetX: x, labelOffsetY: y } : p))
     }));
+  }, [setTransient]);
+
+  const handleLabelDragEnd = useCallback((placeId: string, x: number, y: number) => {
+    commitTransaction(prev => ({
+      ...prev,
+      places: prev.places.map(p => (p.id === placeId ? { ...p, labelOffsetX: x, labelOffsetY: y } : p))
+    }));
+  }, [commitTransaction]);
+
+  // Point picking for custom basemaps
+  const handlePlacePicked = (placeId: string, _imgX: number, _imgY: number, normX: number, normY: number) => {
+    setProject(prev => ({
+      ...prev,
+      places: prev.places.map(p =>
+        p.id === placeId
+          ? { ...p, visualPosition: { x: normX, y: normY }, status: 'resolved' }
+          : p
+      )
+    }));
+    setPickingPlaceId(null);
   };
 
   const handleResolveAmbiguity = (placeId: string, candidate: PlaceRecord) => {
@@ -194,30 +270,34 @@ export const App: React.FC = () => {
     }));
   };
 
-  // Preset loader
+  // Presets loader
   const handleLoadPreset = async (presetId: string) => {
     let presetText = '';
-    let region: any = 'world';
+    let newBasemap: BasemapConfig = defaultBasemap;
 
-    if (presetId === 'arctic') {
+    if (presetId === 'galapagos') {
+      presetText = `圣克里斯托瓦尔岛\n弗雷里安纳岛\n伊莎贝拉岛\n圣地亚哥岛`;
+      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'world' };
+    } else if (presetId === 'arctic_true') {
+      presetText = `奥斯陆\n特罗姆瑟\n朗伊尔城\n89.9, 0 | 北极点`;
+      newBasemap = { ...defaultBasemap, projection: 'azimuthalEquidistant', region: 'arctic' };
+    } else if (presetId === 'antimeridian') {
+      presetText = `东京\n安克雷奇`;
+      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'world' };
+    } else if (presetId === 'spec_v1') {
       presetText = `东京\n43.0618, 141.3545 | 札幌\n奥斯陆\n64.1466, -21.9426 | 雷克雅未克\n78.2232, 15.6469 | 朗伊尔城`;
-      region = 'world';
+      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'world' };
     } else if (presetId === 'silkroad') {
       presetText = `西安\n敦煌\n喀什\n撒马尔罕\n伊斯坦布尔\n罗马`;
-      region = 'asia';
-    } else if (presetId === 'japan') {
-      presetText = `东京\n镰仓\n箱根\n富士山\n京都\n奈良\n大阪`;
-      region = 'japan';
-    } else if (presetId === 'nordic') {
-      presetText = `赫尔辛基\n罗瓦涅米\n特罗姆瑟\n朗伊尔城`;
-      region = 'europe';
+      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'asia' };
     }
 
     const parsed = await parseInputText(presetText);
     setProject(prev => ({
       ...prev,
       places: parsed,
-      mapConfig: { ...prev.mapConfig, region }
+      basemap: newBasemap,
+      camera: defaultCamera
     }));
     setActiveTab('places');
   };
@@ -242,10 +322,10 @@ export const App: React.FC = () => {
             <h1 className="text-sm font-bold text-slate-800 tracking-tight flex items-center space-x-2">
               <span>旅行足迹 / 路线地图生成器</span>
               <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-mono font-normal">
-                V1.0
+                V2.0 Pro
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400">轻量中文经纬度地图视觉编辑器 · 纯前端纯本地</p>
+            <p className="text-[11px] text-slate-400">轻量中文经纬度与自定义底图视觉编辑器 · 纯前端纯本地</p>
           </div>
         </div>
 
@@ -257,7 +337,7 @@ export const App: React.FC = () => {
               onClick={undo}
               disabled={!canUndo}
               className="p-1.5 rounded text-slate-600 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent transition"
-              title="撤销 (Ctrl+Z)"
+              title="撤销 (Ctrl+Z - 一步还原一次拖动)"
             >
               <Undo2 size={16} />
             </button>
@@ -285,42 +365,54 @@ export const App: React.FC = () => {
       {/* 2. Main Workbench (Sidebar + Canvas) */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
-        <aside className="w-[340px] bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-sm z-10">
+        <aside className="w-[350px] bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-sm z-10">
           {/* Navigation Tabs */}
           <div className="flex border-b border-slate-200 text-xs font-medium">
             <button
               onClick={() => setActiveTab('places')}
-              className={`flex-1 py-3 text-center border-b-2 transition flex items-center justify-center space-x-1.5 ${
+              className={`flex-1 py-3 text-center border-b-2 transition flex items-center justify-center space-x-1 ${
                 activeTab === 'places'
                   ? 'border-blue-600 text-blue-600 font-semibold bg-blue-50/20'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
-              <MapPin size={15} />
+              <MapPin size={14} />
               <span>地点 ({project.places.length})</span>
             </button>
 
             <button
+              onClick={() => setActiveTab('basemap')}
+              className={`flex-1 py-3 text-center border-b-2 transition flex items-center justify-center space-x-1 ${
+                activeTab === 'basemap'
+                  ? 'border-blue-600 text-blue-600 font-semibold bg-blue-50/20'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <MapIcon size={14} />
+              <span>底图</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('style')}
-              className={`flex-1 py-3 text-center border-b-2 transition flex items-center justify-center space-x-1.5 ${
+              className={`flex-1 py-3 text-center border-b-2 transition flex items-center justify-center space-x-1 ${
                 activeTab === 'style'
                   ? 'border-blue-600 text-blue-600 font-semibold bg-blue-50/20'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
-              <Sliders size={15} />
+              <Sliders size={14} />
               <span>样式</span>
             </button>
 
             <button
               onClick={() => setActiveTab('project')}
-              className={`flex-1 py-3 text-center border-b-2 transition flex items-center justify-center space-x-1.5 ${
+              className={`flex-1 py-3 text-center border-b-2 transition flex items-center justify-center space-x-1 ${
                 activeTab === 'project'
                   ? 'border-blue-600 text-blue-600 font-semibold bg-blue-50/20'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
-              <FolderKanban size={15} />
+              <FolderKanban size={14} />
               <span>项目</span>
             </button>
           </div>
@@ -341,16 +433,26 @@ export const App: React.FC = () => {
               />
             )}
 
+            {activeTab === 'basemap' && (
+              <BasemapPanel
+                basemap={project.basemap}
+                places={project.places}
+                pickingPlaceId={pickingPlaceId}
+                onSelectPickingPlace={setPickingPlaceId}
+                onChangeBasemap={newBasemap => setProject(prev => ({ ...prev, basemap: newBasemap }))}
+              />
+            )}
+
             {activeTab === 'style' && (
               <StylePanel
-                mapConfig={project.mapConfig}
                 routeStyle={project.routeStyle}
                 markerStyle={project.markerStyle}
                 labelStyle={project.labelStyle}
-                onChangeMapConfig={cfg => setProject(prev => ({ ...prev, mapConfig: { ...prev.mapConfig, ...cfg } }))}
+                overlayScaleMode={project.overlayScaleMode}
                 onChangeRouteStyle={stl => setProject(prev => ({ ...prev, routeStyle: { ...prev.routeStyle, ...stl } }))}
                 onChangeMarkerStyle={stl => setProject(prev => ({ ...prev, markerStyle: { ...prev.markerStyle, ...stl } }))}
                 onChangeLabelStyle={stl => setProject(prev => ({ ...prev, labelStyle: { ...prev.labelStyle, ...stl } }))}
+                onChangeOverlayScaleMode={mode => setProject(prev => ({ ...prev, overlayScaleMode: mode }))}
               />
             )}
 
@@ -369,12 +471,20 @@ export const App: React.FC = () => {
         <main className="flex-1 h-full overflow-hidden relative">
           <MapCanvas
             places={project.places}
+            basemap={project.basemap}
+            camera={project.camera}
             routeStyle={project.routeStyle}
             markerStyle={project.markerStyle}
             labelStyle={project.labelStyle}
-            mapConfig={project.mapConfig}
-            onUpdatePlaceOffset={handleUpdatePlaceOffset}
-            onUpdateLabelOffset={handleUpdateLabelOffset}
+            overlayScaleMode={project.overlayScaleMode}
+            pickingPlaceId={pickingPlaceId}
+            onPlacePicked={handlePlacePicked}
+            onCameraChange={newCamera => setProject(prev => ({ ...prev, camera: newCamera }))}
+            onDragStart={handleDragStart}
+            onMarkerDragMove={handleMarkerDragMove}
+            onMarkerDragEnd={handleMarkerDragEnd}
+            onLabelDragMove={handleLabelDragMove}
+            onLabelDragEnd={handleLabelDragEnd}
           />
         </main>
       </div>
@@ -389,7 +499,7 @@ export const App: React.FC = () => {
       <ConfirmModal
         isOpen={isConfirmResetOpen}
         title="确认清空所有地点？"
-        message="清空后画布上的所有地点和连线将被移除。您也可以在误操作后按下 Ctrl + Z 进行撤销。"
+        message="清空后画布上的所有地点和连线将被移除。您也可以在误操作后按下 Ctrl + Z 进行单步撤销。"
         confirmText="清空地点"
         cancelText="取消"
         isDangerous={true}

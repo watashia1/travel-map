@@ -1,154 +1,79 @@
 import React from 'react';
 import {
-  MapConfig,
   RouteStyle,
   MarkerStyle,
   LabelStyle,
-  MapProjectionType,
-  MapRegionType,
-  RouteType,
+  RouteMode,
   DashStyle,
-  MarkerType
+  MarkerType,
+  OverlayScaleMode
 } from '../types';
 
 interface StylePanelProps {
-  mapConfig: MapConfig;
   routeStyle: RouteStyle;
   markerStyle: MarkerStyle;
   labelStyle: LabelStyle;
-  onChangeMapConfig: (cfg: Partial<MapConfig>) => void;
+  overlayScaleMode: OverlayScaleMode;
   onChangeRouteStyle: (stl: Partial<RouteStyle>) => void;
   onChangeMarkerStyle: (stl: Partial<MarkerStyle>) => void;
   onChangeLabelStyle: (stl: Partial<LabelStyle>) => void;
+  onChangeOverlayScaleMode: (mode: OverlayScaleMode) => void;
 }
 
 export const StylePanel: React.FC<StylePanelProps> = ({
-  mapConfig,
   routeStyle,
   markerStyle,
   labelStyle,
-  onChangeMapConfig,
+  overlayScaleMode,
   onChangeRouteStyle,
   onChangeMarkerStyle,
-  onChangeLabelStyle
+  onChangeLabelStyle,
+  onChangeOverlayScaleMode
 }) => {
   const colorPresets = [
     '#e63946', '#2563eb', '#059669', '#d97706', '#7c3aed', '#db2777', '#0f172a', '#475569'
   ];
 
-  const themePresets = [
-    { name: '极简米白', land: '#f1efe8', border: '#d5d2c8', ocean: '#ffffff' },
-    { name: '经典雅灰', land: '#e2e8f0', border: '#cbd5e1', ocean: '#f8fafc' },
-    { name: '淡蓝海洋', land: '#f3f4f6', border: '#e5e7eb', ocean: '#e0f2fe' },
-    { name: '暗夜黑金', land: '#1e293b', border: '#334155', ocean: '#0f172a' }
-  ];
-
   return (
     <div className="flex flex-col h-full overflow-y-auto p-4 space-y-6 text-xs text-slate-700">
-      {/* 1. Map Projection & Region */}
+      {/* 1. Route Geometry & Mode */}
       <section className="space-y-3">
         <h4 className="font-semibold text-slate-900 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200">
-          地图投影与区域
+          路线连线模式 (Route)
         </h4>
 
         <div>
-          <label className="block text-slate-500 mb-1.5">投影方式 (Projection)</label>
-          <div className="grid grid-cols-3 gap-1.5">
-            {(['equalEarth', 'naturalEarth', 'mercator'] as MapProjectionType[]).map(proj => (
-              <button
-                key={proj}
-                onClick={() => onChangeMapConfig({ projection: proj })}
-                className={`py-1.5 px-2 rounded-lg border text-center transition font-medium ${
-                  mapConfig.projection === proj
-                    ? 'bg-blue-50 border-blue-500 text-blue-600'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {proj === 'equalEarth' ? 'Equal Earth' : proj === 'naturalEarth' ? 'Natural Earth' : 'Mercator'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-slate-500 mb-1.5">视角聚焦区域</label>
+          <label className="block text-slate-500 mb-1.5 font-medium">连线计算方式</label>
           <div className="grid grid-cols-3 gap-1.5">
             {[
-              { id: 'world', label: '世界全景' },
-              { id: 'asia', label: '亚洲' },
-              { id: 'europe', label: '欧洲' },
-              { id: 'china', label: '中国' },
-              { id: 'japan', label: '日本' },
-              { id: 'arctic', label: '北极极地' }
-            ].map(r => (
+              { id: 'geodesic', label: '球面测地线 (推荐)' },
+              { id: 'straight-screen', label: '平面直线' },
+              { id: 'decorative-curve', label: '视觉装饰曲线' }
+            ].map(m => (
               <button
-                key={r.id}
-                onClick={() => onChangeMapConfig({ region: r.id as MapRegionType })}
-                className={`py-1.5 px-2 rounded-lg border text-center transition ${
-                  mapConfig.region === r.id
+                key={m.id}
+                onClick={() => onChangeRouteStyle({ mode: m.id as RouteMode })}
+                className={`py-1.5 px-1.5 rounded-lg border text-center transition text-[11px] ${
+                  routeStyle.mode === m.id
                     ? 'bg-blue-50 border-blue-500 text-blue-600 font-medium'
                     : 'border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                {r.label}
+                {m.label}
               </button>
             ))}
+          </div>
+          <div className="text-[10px] text-slate-400 mt-1">
+            {routeStyle.mode === 'geodesic'
+              ? '沿地球大圆球面真实飞行路径绘制，跨 180° 经线安全无跳跃。'
+              : routeStyle.mode === 'straight-screen'
+              ? '直接以屏幕直线两点连接。'
+              : '两点间以贝塞尔优雅弧线拱起。'}
           </div>
         </div>
 
         <div>
-          <label className="block text-slate-500 mb-1.5">底图配色主题</label>
-          <div className="grid grid-cols-2 gap-2">
-            {themePresets.map(theme => (
-              <button
-                key={theme.name}
-                onClick={() =>
-                  onChangeMapConfig({
-                    landColor: theme.land,
-                    borderColor: theme.border,
-                    oceanColor: theme.ocean
-                  })
-                }
-                className="p-2 rounded-lg border border-slate-200 hover:border-slate-400 flex items-center space-x-2 text-left transition"
-              >
-                <div
-                  className="w-5 h-5 rounded border border-slate-300 shrink-0"
-                  style={{ backgroundColor: theme.land }}
-                />
-                <span className="text-slate-700 text-xs truncate">{theme.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Route Style */}
-      <section className="space-y-3">
-        <h4 className="font-semibold text-slate-900 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200">
-          路线样式 (Route)
-        </h4>
-
-        <div>
-          <label className="block text-slate-500 mb-1.5">连线形态</label>
-          <div className="grid grid-cols-2 gap-2">
-            {(['curved', 'straight'] as RouteType[]).map(t => (
-              <button
-                key={t}
-                onClick={() => onChangeRouteStyle({ type: t })}
-                className={`py-1.5 px-2 rounded-lg border text-center transition ${
-                  routeStyle.type === t
-                    ? 'bg-blue-50 border-blue-500 text-blue-600 font-medium'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {t === 'curved' ? '╭ 平滑曲线 (推荐)' : '─ 直线'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-slate-500 mb-1.5">线型风格</label>
+          <label className="block text-slate-500 mb-1.5 font-medium">线型样式</label>
           <div className="grid grid-cols-3 gap-1.5">
             {(['solid', 'dashed', 'dotted'] as DashStyle[]).map(d => (
               <button
@@ -167,7 +92,7 @@ export const StylePanel: React.FC<StylePanelProps> = ({
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="text-slate-500">显示前进方向箭头</label>
+          <label className="text-slate-600 font-medium">显示航线前进箭头</label>
           <input
             type="checkbox"
             checked={routeStyle.showArrows}
@@ -192,22 +117,7 @@ export const StylePanel: React.FC<StylePanelProps> = ({
         </div>
 
         <div>
-          <div className="flex justify-between text-slate-500 mb-1">
-            <span>线条透明度 ({Math.round(routeStyle.strokeOpacity * 100)}%)</span>
-          </div>
-          <input
-            type="range"
-            min={0.2}
-            max={1}
-            step={0.05}
-            value={routeStyle.strokeOpacity}
-            onChange={e => onChangeRouteStyle({ strokeOpacity: parseFloat(e.target.value) })}
-            className="w-full accent-blue-600"
-          />
-        </div>
-
-        <div>
-          <label className="block text-slate-500 mb-1.5">路线颜色</label>
+          <label className="block text-slate-500 mb-1.5 font-medium">路线颜色</label>
           <div className="flex items-center space-x-2">
             <div className="flex space-x-1 flex-1">
               {colorPresets.map(c => (
@@ -229,14 +139,37 @@ export const StylePanel: React.FC<StylePanelProps> = ({
         </div>
       </section>
 
-      {/* 3. Marker Style */}
+      {/* 2. Visual Scale Mode & Marker Style */}
       <section className="space-y-3">
         <h4 className="font-semibold text-slate-900 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200">
-          标记点样式 (Marker)
+          标记点与图层尺寸策略
         </h4>
 
         <div>
-          <label className="block text-slate-500 mb-1.5">点位形状</label>
+          <label className="block text-slate-500 mb-1.5 font-medium">放大地图时红点与文字的尺寸策略</label>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { id: 'screen-fixed', title: '屏幕固定尺寸 (推荐)', desc: '放大地图时红点文字不膨胀' },
+              { id: 'map-scaled', title: '随地图等比缩放', desc: '红点与文字随地图同步放大' }
+            ].map(m => (
+              <button
+                key={m.id}
+                onClick={() => onChangeOverlayScaleMode(m.id as OverlayScaleMode)}
+                className={`p-2 rounded-lg border text-left transition ${
+                  overlayScaleMode === m.id
+                    ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div>{m.title}</div>
+                <div className="text-[10px] text-slate-400 mt-0.5">{m.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-slate-500 mb-1.5 font-medium">点位形状</label>
           <div className="grid grid-cols-3 gap-1.5">
             {(['dot', 'numbered', 'ring'] as MarkerType[]).map(t => (
               <button
@@ -256,7 +189,7 @@ export const StylePanel: React.FC<StylePanelProps> = ({
 
         <div>
           <div className="flex justify-between text-slate-500 mb-1">
-            <span>点位大小 ({markerStyle.size}px)</span>
+            <span>点位视觉大小 ({markerStyle.size}px)</span>
           </div>
           <input
             type="range"
@@ -270,7 +203,7 @@ export const StylePanel: React.FC<StylePanelProps> = ({
         </div>
 
         <div>
-          <label className="block text-slate-500 mb-1.5">标记颜色</label>
+          <label className="block text-slate-500 mb-1.5 font-medium">标记颜色</label>
           <div className="flex items-center space-x-2">
             <div className="flex space-x-1 flex-1">
               {colorPresets.map(c => (
@@ -292,29 +225,27 @@ export const StylePanel: React.FC<StylePanelProps> = ({
         </div>
       </section>
 
-      {/* 4. Label Style */}
+      {/* 3. Label Style & Collision Avoidance */}
       <section className="space-y-3 pb-6">
         <h4 className="font-semibold text-slate-900 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200">
-          地名标签样式 (Label)
+          地名标签排版 (Label)
         </h4>
 
-        <div>
-          <div className="flex justify-between text-slate-500 mb-1">
-            <span>文字大小 ({labelStyle.fontSize}px)</span>
+        <div className="flex items-center justify-between p-2.5 bg-blue-50/50 rounded-lg border border-blue-100">
+          <div>
+            <div className="font-medium text-slate-800">8方向智能自动避让重叠</div>
+            <div className="text-[10px] text-slate-500">点位密集时自动寻找无遮挡角度展示文字</div>
           </div>
           <input
-            type="range"
-            min={10}
-            max={20}
-            step={1}
-            value={labelStyle.fontSize}
-            onChange={e => onChangeLabelStyle({ fontSize: parseInt(e.target.value) })}
-            className="w-full accent-blue-600"
+            type="checkbox"
+            checked={labelStyle.autoAvoidCollisions}
+            onChange={e => onChangeLabelStyle({ autoAvoidCollisions: e.target.checked })}
+            className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4"
           />
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="text-slate-500">白色描边保护 (提升文字辨识度)</label>
+          <label className="text-slate-600 font-medium">白色文字描边 (保护可读性)</label>
           <input
             type="checkbox"
             checked={labelStyle.showHalo}
@@ -324,7 +255,22 @@ export const StylePanel: React.FC<StylePanelProps> = ({
         </div>
 
         <div>
-          <label className="block text-slate-500 mb-1.5">文字颜色</label>
+          <div className="flex justify-between text-slate-500 mb-1">
+            <span>文字大小 ({labelStyle.fontSize}px)</span>
+          </div>
+          <input
+            type="range"
+            min={10}
+            max={22}
+            step={1}
+            value={labelStyle.fontSize}
+            onChange={e => onChangeLabelStyle({ fontSize: parseInt(e.target.value) })}
+            className="w-full accent-blue-600"
+          />
+        </div>
+
+        <div>
+          <label className="block text-slate-500 mb-1.5 font-medium">文字颜色</label>
           <div className="flex items-center space-x-2">
             <input
               type="color"
