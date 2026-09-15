@@ -1,0 +1,2556 @@
+[
+  {
+    "name": "Tokyo",
+    "displayName": "东京",
+    "aliases": [
+      "东京",
+      "東京都",
+      "とうきょう",
+      "Tokyo",
+      "Dongjing"
+    ],
+    "lat": 35.6762,
+    "lon": 139.6503,
+    "country": "日本"
+  },
+  {
+    "name": "Sapporo",
+    "displayName": "札幌",
+    "aliases": [
+      "札幌",
+      "さっぽろ",
+      "Sapporo"
+    ],
+    "lat": 43.0618,
+    "lon": 141.3545,
+    "country": "日本"
+  },
+  {
+    "name": "Oslo",
+    "displayName": "奥斯陆",
+    "aliases": [
+      "奥斯陆",
+      "Oslo",
+      "Christiania"
+    ],
+    "lat": 59.9139,
+    "lon": 10.7522,
+    "country": "挪威"
+  },
+  {
+    "name": "Reykjavik",
+    "displayName": "雷克雅未克",
+    "aliases": [
+      "雷克雅未克",
+      "Reykjavík",
+      "Reykjavik"
+    ],
+    "lat": 64.1466,
+    "lon": -21.9426,
+    "country": "冰岛"
+  },
+  {
+    "name": "Longyearbyen",
+    "displayName": "朗伊尔城",
+    "aliases": [
+      "朗伊尔城",
+      "Longyearbyen",
+      "朗伊尔宾",
+      "斯瓦尔巴"
+    ],
+    "lat": 78.2232,
+    "lon": 15.6469,
+    "country": "挪威"
+  },
+  {
+    "name": "Tromsø",
+    "displayName": "特罗姆瑟",
+    "aliases": [
+      "特罗姆瑟",
+      "Tromso",
+      "Tromsø"
+    ],
+    "lat": 69.6492,
+    "lon": 18.9553,
+    "country": "挪威"
+  },
+  {
+    "name": "Murmansk",
+    "displayName": "摩尔曼斯克",
+    "aliases": [
+      "摩尔曼斯克",
+      "Murmansk"
+    ],
+    "lat": 68.9585,
+    "lon": 33.0827,
+    "country": "俄罗斯"
+  },
+  {
+    "name": "Ushuaia",
+    "displayName": "乌斯怀亚",
+    "aliases": [
+      "乌斯怀亚",
+      "Ushuaia"
+    ],
+    "lat": -54.8019,
+    "lon": -68.303,
+    "country": "阿根廷"
+  },
+  {
+    "name": "Punta Arenas",
+    "displayName": "蓬塔阿雷纳斯",
+    "aliases": [
+      "蓬塔阿雷纳斯",
+      "Punta Arenas"
+    ],
+    "lat": -53.1638,
+    "lon": -70.9171,
+    "country": "智利"
+  },
+  {
+    "name": "Zhongshan Station",
+    "displayName": "中国南极中山站",
+    "aliases": [
+      "中山站",
+      "南极中山站",
+      "Zhongshan Station"
+    ],
+    "lat": -69.3731,
+    "lon": 76.3783,
+    "country": "南极"
+  },
+  {
+    "name": "Yellow River Station",
+    "displayName": "中国北极黄河站",
+    "aliases": [
+      "黄河站",
+      "北极黄河站",
+      "Ny-Ålesund",
+      "新奥尔松"
+    ],
+    "lat": 78.9234,
+    "lon": 11.9289,
+    "country": "挪威"
+  },
+  {
+    "name": "Cambridge, England",
+    "displayName": "剑桥 (英国)",
+    "aliases": [
+      "剑桥",
+      "Cambridge",
+      "Cambridge, UK",
+      "Cambridge, England"
+    ],
+    "lat": 52.2053,
+    "lon": 0.1218,
+    "country": "英国"
+  },
+  {
+    "name": "Cambridge, Massachusetts",
+    "displayName": "剑桥 (美国马萨诸塞州)",
+    "aliases": [
+      "剑桥",
+      "Cambridge",
+      "Cambridge, MA",
+      "Cambridge, USA"
+    ],
+    "lat": 42.3736,
+    "lon": -71.1097,
+    "country": "美国"
+  },
+  {
+    "name": "Cambridge, Ontario",
+    "displayName": "剑桥 (加拿大安大略省)",
+    "aliases": [
+      "剑桥",
+      "Cambridge",
+      "Cambridge, ON",
+      "Cambridge, Canada"
+    ],
+    "lat": 43.3616,
+    "lon": -80.3144,
+    "country": "加拿大"
+  },
+  {
+    "name": "Beijing",
+    "displayName": "北京",
+    "aliases": [
+      "北京",
+      "北京市",
+      "Beijing",
+      "Peking"
+    ],
+    "lat": 39.9042,
+    "lon": 116.4074,
+    "country": "中国"
+  },
+  {
+    "name": "Shanghai",
+    "displayName": "上海",
+    "aliases": [
+      "上海",
+      "上海市",
+      "Shanghai"
+    ],
+    "lat": 31.2304,
+    "lon": 121.4737,
+    "country": "中国"
+  },
+  {
+    "name": "Guangzhou",
+    "displayName": "广州",
+    "aliases": [
+      "广州",
+      "广州市",
+      "Guangzhou",
+      "Canton"
+    ],
+    "lat": 23.1291,
+    "lon": 113.2644,
+    "country": "中国"
+  },
+  {
+    "name": "Shenzhen",
+    "displayName": "深圳",
+    "aliases": [
+      "深圳",
+      "深圳市",
+      "Shenzhen"
+    ],
+    "lat": 22.5431,
+    "lon": 114.0579,
+    "country": "中国"
+  },
+  {
+    "name": "Chengdu",
+    "displayName": "成都",
+    "aliases": [
+      "成都",
+      "成都市",
+      "Chengdu"
+    ],
+    "lat": 30.5728,
+    "lon": 104.0668,
+    "country": "中国"
+  },
+  {
+    "name": "Hangzhou",
+    "displayName": "杭州",
+    "aliases": [
+      "杭州",
+      "杭州市",
+      "Hangzhou"
+    ],
+    "lat": 30.2741,
+    "lon": 120.1551,
+    "country": "中国"
+  },
+  {
+    "name": "Chongqing",
+    "displayName": "重庆",
+    "aliases": [
+      "重庆",
+      "重庆市",
+      "Chongqing"
+    ],
+    "lat": 29.563,
+    "lon": 106.5516,
+    "country": "中国"
+  },
+  {
+    "name": "Xi'an",
+    "displayName": "西安",
+    "aliases": [
+      "西安",
+      "西安市",
+      "Xi'an",
+      "Xian",
+      "长安"
+    ],
+    "lat": 34.3416,
+    "lon": 108.9398,
+    "country": "中国"
+  },
+  {
+    "name": "Wuhan",
+    "displayName": "武汉",
+    "aliases": [
+      "武汉",
+      "武汉市",
+      "Wuhan"
+    ],
+    "lat": 30.5928,
+    "lon": 114.3055,
+    "country": "中国"
+  },
+  {
+    "name": "Nanjing",
+    "displayName": "南京",
+    "aliases": [
+      "南京",
+      "南京市",
+      "Nanjing",
+      "Nanking"
+    ],
+    "lat": 32.0603,
+    "lon": 118.7969,
+    "country": "中国"
+  },
+  {
+    "name": "Tianjin",
+    "displayName": "天津",
+    "aliases": [
+      "天津",
+      "天津市",
+      "Tianjin"
+    ],
+    "lat": 39.3434,
+    "lon": 117.3616,
+    "country": "中国"
+  },
+  {
+    "name": "Suzhou",
+    "displayName": "苏州",
+    "aliases": [
+      "苏州",
+      "苏州市",
+      "Suzhou"
+    ],
+    "lat": 31.299,
+    "lon": 120.5853,
+    "country": "中国"
+  },
+  {
+    "name": "Changsha",
+    "displayName": "长沙",
+    "aliases": [
+      "长沙",
+      "长沙市",
+      "Changsha"
+    ],
+    "lat": 28.2282,
+    "lon": 112.9388,
+    "country": "中国"
+  },
+  {
+    "name": "Zhengzhou",
+    "displayName": "郑州",
+    "aliases": [
+      "郑州",
+      "郑州市",
+      "Zhengzhou"
+    ],
+    "lat": 34.7466,
+    "lon": 113.6253,
+    "country": "中国"
+  },
+  {
+    "name": "Qingdao",
+    "displayName": "青岛",
+    "aliases": [
+      "青岛",
+      "青岛市",
+      "Qingdao",
+      "Tsingtao"
+    ],
+    "lat": 36.0671,
+    "lon": 120.3826,
+    "country": "中国"
+  },
+  {
+    "name": "Dalian",
+    "displayName": "大连",
+    "aliases": [
+      "大连",
+      "大连市",
+      "Dalian"
+    ],
+    "lat": 38.914,
+    "lon": 121.6147,
+    "country": "中国"
+  },
+  {
+    "name": "Xiamen",
+    "displayName": "厦门",
+    "aliases": [
+      "厦门",
+      "厦门市",
+      "Xiamen",
+      "Amoy"
+    ],
+    "lat": 24.4798,
+    "lon": 118.0894,
+    "country": "中国"
+  },
+  {
+    "name": "Kunming",
+    "displayName": "昆明",
+    "aliases": [
+      "昆明",
+      "昆明市",
+      "Kunming",
+      "春城"
+    ],
+    "lat": 25.0406,
+    "lon": 102.7129,
+    "country": "中国"
+  },
+  {
+    "name": "Harbin",
+    "displayName": "哈尔滨",
+    "aliases": [
+      "哈尔滨",
+      "哈尔滨市",
+      "Harbin",
+      "冰城"
+    ],
+    "lat": 45.8038,
+    "lon": 126.535,
+    "country": "中国"
+  },
+  {
+    "name": "Shenyang",
+    "displayName": "沈阳",
+    "aliases": [
+      "沈阳",
+      "沈阳市",
+      "Shenyang",
+      "盛京",
+      "奉天"
+    ],
+    "lat": 41.8057,
+    "lon": 123.4315,
+    "country": "中国"
+  },
+  {
+    "name": "Jinan",
+    "displayName": "济南",
+    "aliases": [
+      "济南",
+      "济南市",
+      "Jinan",
+      "泉城"
+    ],
+    "lat": 36.6512,
+    "lon": 117.1201,
+    "country": "中国"
+  },
+  {
+    "name": "Fuzhou",
+    "displayName": "福州",
+    "aliases": [
+      "福州",
+      "福州市",
+      "Fuzhou"
+    ],
+    "lat": 26.0745,
+    "lon": 119.2965,
+    "country": "中国"
+  },
+  {
+    "name": "Nanning",
+    "displayName": "南宁",
+    "aliases": [
+      "南宁",
+      "南宁市",
+      "Nanning"
+    ],
+    "lat": 22.817,
+    "lon": 108.3665,
+    "country": "中国"
+  },
+  {
+    "name": "Haikou",
+    "displayName": "海口",
+    "aliases": [
+      "海口",
+      "海口市",
+      "Haikou"
+    ],
+    "lat": 20.044,
+    "lon": 110.1999,
+    "country": "中国"
+  },
+  {
+    "name": "Sanya",
+    "displayName": "三亚",
+    "aliases": [
+      "三亚",
+      "三亚市",
+      "Sanya",
+      "天涯海角"
+    ],
+    "lat": 18.2528,
+    "lon": 109.512,
+    "country": "中国"
+  },
+  {
+    "name": "Guiyang",
+    "displayName": "贵阳",
+    "aliases": [
+      "贵阳",
+      "贵阳市",
+      "Guiyang",
+      "林城"
+    ],
+    "lat": 26.647,
+    "lon": 106.6302,
+    "country": "中国"
+  },
+  {
+    "name": "Lanzhou",
+    "displayName": "兰州",
+    "aliases": [
+      "兰州",
+      "兰州市",
+      "Lanzhou"
+    ],
+    "lat": 36.0611,
+    "lon": 103.8343,
+    "country": "中国"
+  },
+  {
+    "name": "Xining",
+    "displayName": "西宁",
+    "aliases": [
+      "西宁",
+      "西宁市",
+      "Xining"
+    ],
+    "lat": 36.6171,
+    "lon": 101.7782,
+    "country": "中国"
+  },
+  {
+    "name": "Yinchuan",
+    "displayName": "银川",
+    "aliases": [
+      "银川",
+      "银川市",
+      "Yinchuan"
+    ],
+    "lat": 38.4872,
+    "lon": 106.2309,
+    "country": "中国"
+  },
+  {
+    "name": "Urumqi",
+    "displayName": "乌鲁木齐",
+    "aliases": [
+      "乌鲁木齐",
+      "乌鲁木齐市",
+      "Urumqi",
+      "Ürümqi",
+      "迪化"
+    ],
+    "lat": 43.8256,
+    "lon": 87.6168,
+    "country": "中国"
+  },
+  {
+    "name": "Hohhot",
+    "displayName": "呼和浩特",
+    "aliases": [
+      "呼和浩特",
+      "呼和浩特市",
+      "Hohhot",
+      "青城"
+    ],
+    "lat": 40.8424,
+    "lon": 111.7511,
+    "country": "中国"
+  },
+  {
+    "name": "Lhasa",
+    "displayName": "拉萨",
+    "aliases": [
+      "拉萨",
+      "拉萨市",
+      "Lhasa",
+      "日光城"
+    ],
+    "lat": 29.6525,
+    "lon": 91.1721,
+    "country": "中国"
+  },
+  {
+    "name": "Hong Kong",
+    "displayName": "香港",
+    "aliases": [
+      "香港",
+      "Hong Kong",
+      "HK",
+      "Xianggang"
+    ],
+    "lat": 22.3193,
+    "lon": 114.1694,
+    "country": "中国"
+  },
+  {
+    "name": "Macau",
+    "displayName": "澳门",
+    "aliases": [
+      "澳门",
+      "Macau",
+      "Macao",
+      "Aomen"
+    ],
+    "lat": 22.1987,
+    "lon": 113.5439,
+    "country": "中国"
+  },
+  {
+    "name": "Taipei",
+    "displayName": "台北",
+    "aliases": [
+      "台北",
+      "台北市",
+      "Taipei"
+    ],
+    "lat": 25.033,
+    "lon": 121.5654,
+    "country": "中国"
+  },
+  {
+    "name": "Kaohsiung",
+    "displayName": "高雄",
+    "aliases": [
+      "高雄",
+      "高雄市",
+      "Kaohsiung"
+    ],
+    "lat": 22.6273,
+    "lon": 120.3014,
+    "country": "中国"
+  },
+  {
+    "name": "Taichung",
+    "displayName": "台中",
+    "aliases": [
+      "台中",
+      "台中市",
+      "Taichung"
+    ],
+    "lat": 24.1477,
+    "lon": 120.6736,
+    "country": "中国"
+  },
+  {
+    "name": "Guilin",
+    "displayName": "桂林",
+    "aliases": [
+      "桂林",
+      "桂林市",
+      "Guilin",
+      "阳朔"
+    ],
+    "lat": 25.2736,
+    "lon": 110.2902,
+    "country": "中国"
+  },
+  {
+    "name": "Lijiang",
+    "displayName": "丽江",
+    "aliases": [
+      "丽江",
+      "丽江市",
+      "Lijiang",
+      "古城"
+    ],
+    "lat": 26.8721,
+    "lon": 100.2297,
+    "country": "中国"
+  },
+  {
+    "name": "Dali",
+    "displayName": "大理",
+    "aliases": [
+      "大理",
+      "大理市",
+      "Dali",
+      "洱海"
+    ],
+    "lat": 25.6065,
+    "lon": 100.2676,
+    "country": "中国"
+  },
+  {
+    "name": "Dunhuang",
+    "displayName": "敦煌",
+    "aliases": [
+      "敦煌",
+      "Dunhuang",
+      "莫高窟"
+    ],
+    "lat": 40.1421,
+    "lon": 94.662,
+    "country": "中国"
+  },
+  {
+    "name": "Zhangjiajie",
+    "displayName": "张家界",
+    "aliases": [
+      "张家界",
+      "Zhangjiajie",
+      "天门山"
+    ],
+    "lat": 29.117,
+    "lon": 110.4792,
+    "country": "中国"
+  },
+  {
+    "name": "Huangshan",
+    "displayName": "黄山",
+    "aliases": [
+      "黄山",
+      "Huangshan"
+    ],
+    "lat": 29.7147,
+    "lon": 118.3375,
+    "country": "中国"
+  },
+  {
+    "name": "Jiuzhaigou",
+    "displayName": "九寨沟",
+    "aliases": [
+      "九寨沟",
+      "Jiuzhaigou"
+    ],
+    "lat": 33.26,
+    "lon": 103.9186,
+    "country": "中国"
+  },
+  {
+    "name": "Kashgar",
+    "displayName": "喀什",
+    "aliases": [
+      "喀什",
+      "Kashgar",
+      "Kashi"
+    ],
+    "lat": 39.4677,
+    "lon": 75.9938,
+    "country": "中国"
+  },
+  {
+    "name": "Osaka",
+    "displayName": "大阪",
+    "aliases": [
+      "大阪",
+      "大阪市",
+      "おおさか",
+      "Osaka"
+    ],
+    "lat": 34.6937,
+    "lon": 135.5023,
+    "country": "日本"
+  },
+  {
+    "name": "Kyoto",
+    "displayName": "京都",
+    "aliases": [
+      "京都",
+      "京都市",
+      "きょうと",
+      "Kyoto"
+    ],
+    "lat": 35.0116,
+    "lon": 135.7681,
+    "country": "日本"
+  },
+  {
+    "name": "Yokohama",
+    "displayName": "横滨",
+    "aliases": [
+      "横滨",
+      "よこはま",
+      "Yokohama"
+    ],
+    "lat": 35.4437,
+    "lon": 139.638,
+    "country": "日本"
+  },
+  {
+    "name": "Nagoya",
+    "displayName": "名古屋",
+    "aliases": [
+      "名古屋",
+      "なごや",
+      "Nagoya"
+    ],
+    "lat": 35.1815,
+    "lon": 136.9066,
+    "country": "日本"
+  },
+  {
+    "name": "Fukuoka",
+    "displayName": "福冈",
+    "aliases": [
+      "福冈",
+      "ふくおか",
+      "Fukuoka",
+      "博多"
+    ],
+    "lat": 33.5904,
+    "lon": 130.4017,
+    "country": "日本"
+  },
+  {
+    "name": "Kobe",
+    "displayName": "神户",
+    "aliases": [
+      "神户",
+      "こうべ",
+      "Kobe"
+    ],
+    "lat": 34.6901,
+    "lon": 135.1955,
+    "country": "日本"
+  },
+  {
+    "name": "Nara",
+    "displayName": "奈良",
+    "aliases": [
+      "奈良",
+      "なら",
+      "Nara"
+    ],
+    "lat": 34.6851,
+    "lon": 135.8048,
+    "country": "日本"
+  },
+  {
+    "name": "Hiroshima",
+    "displayName": "广岛",
+    "aliases": [
+      "广岛",
+      "ひろしま",
+      "Hiroshima"
+    ],
+    "lat": 34.3853,
+    "lon": 132.4553,
+    "country": "日本"
+  },
+  {
+    "name": "Sendai",
+    "displayName": "仙台",
+    "aliases": [
+      "仙台",
+      "せんだい",
+      "Sendai"
+    ],
+    "lat": 38.2682,
+    "lon": 140.8694,
+    "country": "日本"
+  },
+  {
+    "name": "Naha",
+    "displayName": "那霸",
+    "aliases": [
+      "那霸",
+      "那霸市",
+      "なは",
+      "Naha",
+      "冲绳",
+      "Okinawa"
+    ],
+    "lat": 26.2124,
+    "lon": 127.6809,
+    "country": "日本"
+  },
+  {
+    "name": "Hakodate",
+    "displayName": "函馆",
+    "aliases": [
+      "函馆",
+      "はこだて",
+      "Hakodate"
+    ],
+    "lat": 41.7687,
+    "lon": 140.7288,
+    "country": "日本"
+  },
+  {
+    "name": "Otaru",
+    "displayName": "小樽",
+    "aliases": [
+      "小樽",
+      "おたる",
+      "Otaru"
+    ],
+    "lat": 43.1907,
+    "lon": 140.9947,
+    "country": "日本"
+  },
+  {
+    "name": "Kanazawa",
+    "displayName": "金泽",
+    "aliases": [
+      "金泽",
+      "かなざわ",
+      "Kanazawa"
+    ],
+    "lat": 36.5613,
+    "lon": 136.6562,
+    "country": "日本"
+  },
+  {
+    "name": "Nagasaki",
+    "displayName": "长崎",
+    "aliases": [
+      "长崎",
+      "ながさき",
+      "Nagasaki"
+    ],
+    "lat": 32.7503,
+    "lon": 129.8777,
+    "country": "日本"
+  },
+  {
+    "name": "Kagoshima",
+    "displayName": "鹿儿岛",
+    "aliases": [
+      "鹿儿岛",
+      "かごしま",
+      "Kagoshima"
+    ],
+    "lat": 31.5966,
+    "lon": 130.5571,
+    "country": "日本"
+  },
+  {
+    "name": "Hakone",
+    "displayName": "箱根",
+    "aliases": [
+      "箱根",
+      "Hakone"
+    ],
+    "lat": 35.2323,
+    "lon": 139.1069,
+    "country": "日本"
+  },
+  {
+    "name": "Nikko",
+    "displayName": "日光",
+    "aliases": [
+      "日光",
+      "Nikko"
+    ],
+    "lat": 36.758,
+    "lon": 139.5988,
+    "country": "日本"
+  },
+  {
+    "name": "Kamakura",
+    "displayName": "镰仓",
+    "aliases": [
+      "镰仓",
+      "Kamakura"
+    ],
+    "lat": 35.3192,
+    "lon": 139.5467,
+    "country": "日本"
+  },
+  {
+    "name": "Mount Fuji",
+    "displayName": "富士山",
+    "aliases": [
+      "富士山",
+      "Mt Fuji",
+      "Fuji"
+    ],
+    "lat": 35.3606,
+    "lon": 138.7274,
+    "country": "日本"
+  },
+  {
+    "name": "Shizuoka",
+    "displayName": "静冈",
+    "aliases": [
+      "静冈",
+      "Shizuoka"
+    ],
+    "lat": 34.9756,
+    "lon": 138.3828,
+    "country": "日本"
+  },
+  {
+    "name": "Takayama",
+    "displayName": "高山",
+    "aliases": [
+      "高山",
+      "飞驒高山",
+      "Takayama"
+    ],
+    "lat": 36.1461,
+    "lon": 137.2522,
+    "country": "日本"
+  },
+  {
+    "name": "Seoul",
+    "displayName": "首尔",
+    "aliases": [
+      "首尔",
+      "汉城",
+      "Seoul"
+    ],
+    "lat": 37.5665,
+    "lon": 126.978,
+    "country": "韩国"
+  },
+  {
+    "name": "Busan",
+    "displayName": "釜山",
+    "aliases": [
+      "釜山",
+      "Busan",
+      "Pusan"
+    ],
+    "lat": 35.1796,
+    "lon": 129.0756,
+    "country": "韩国"
+  },
+  {
+    "name": "Jeju",
+    "displayName": "济州",
+    "aliases": [
+      "济州",
+      "济州岛",
+      "Jeju"
+    ],
+    "lat": 33.4996,
+    "lon": 126.5312,
+    "country": "韩国"
+  },
+  {
+    "name": "Bangkok",
+    "displayName": "曼谷",
+    "aliases": [
+      "曼谷",
+      "Bangkok",
+      "Krung Thep"
+    ],
+    "lat": 13.7563,
+    "lon": 100.5018,
+    "country": "泰国"
+  },
+  {
+    "name": "Chiang Mai",
+    "displayName": "清迈",
+    "aliases": [
+      "清迈",
+      "Chiang Mai"
+    ],
+    "lat": 18.7883,
+    "lon": 98.9853,
+    "country": "泰国"
+  },
+  {
+    "name": "Phuket",
+    "displayName": "普吉",
+    "aliases": [
+      "普吉",
+      "普吉岛",
+      "Phuket"
+    ],
+    "lat": 7.8804,
+    "lon": 98.3923,
+    "country": "泰国"
+  },
+  {
+    "name": "Singapore",
+    "displayName": "新加坡",
+    "aliases": [
+      "新加坡",
+      "Singapore",
+      "狮城"
+    ],
+    "lat": 1.3521,
+    "lon": 103.8198,
+    "country": "新加坡"
+  },
+  {
+    "name": "Kuala Lumpur",
+    "displayName": "吉隆坡",
+    "aliases": [
+      "吉隆坡",
+      "Kuala Lumpur",
+      "KL"
+    ],
+    "lat": 3.139,
+    "lon": 101.6869,
+    "country": "马来西亚"
+  },
+  {
+    "name": "Penang",
+    "displayName": "槟城",
+    "aliases": [
+      "槟城",
+      "乔治市",
+      "Penang"
+    ],
+    "lat": 5.4141,
+    "lon": 100.3288,
+    "country": "马来西亚"
+  },
+  {
+    "name": "Kota Kinabalu",
+    "displayName": "亚庇",
+    "aliases": [
+      "亚庇",
+      "哥打京那巴鲁",
+      "Kota Kinabalu",
+      "沙巴"
+    ],
+    "lat": 5.9804,
+    "lon": 116.0735,
+    "country": "马来西亚"
+  },
+  {
+    "name": "Hanoi",
+    "displayName": "河内",
+    "aliases": [
+      "河内",
+      "Hanoi"
+    ],
+    "lat": 21.0285,
+    "lon": 105.8542,
+    "country": "越南"
+  },
+  {
+    "name": "Ho Chi Minh City",
+    "displayName": "胡志明市",
+    "aliases": [
+      "胡志明市",
+      "西贡",
+      "Ho Chi Minh",
+      "Saigon"
+    ],
+    "lat": 10.8231,
+    "lon": 106.6297,
+    "country": "越南"
+  },
+  {
+    "name": "Da Nang",
+    "displayName": "岘港",
+    "aliases": [
+      "岘港",
+      "Da Nang"
+    ],
+    "lat": 16.0544,
+    "lon": 108.2022,
+    "country": "越南"
+  },
+  {
+    "name": "Siem Reap",
+    "displayName": "暹粒",
+    "aliases": [
+      "暹粒",
+      "Siem Reap",
+      "吴哥窟"
+    ],
+    "lat": 13.3671,
+    "lon": 103.8448,
+    "country": "柬埔寨"
+  },
+  {
+    "name": "Phnom Penh",
+    "displayName": "金边",
+    "aliases": [
+      "金边",
+      "Phnom Penh"
+    ],
+    "lat": 11.5564,
+    "lon": 104.9282,
+    "country": "柬埔寨"
+  },
+  {
+    "name": "Jakarta",
+    "displayName": "雅加达",
+    "aliases": [
+      "雅加达",
+      "Jakarta"
+    ],
+    "lat": -6.2088,
+    "lon": 106.8456,
+    "country": "印度尼西亚"
+  },
+  {
+    "name": "Bali",
+    "displayName": "巴厘岛",
+    "aliases": [
+      "巴厘岛",
+      "Bali",
+      "登巴萨",
+      "Denpasar"
+    ],
+    "lat": -8.4095,
+    "lon": 115.1889,
+    "country": "印度尼西亚"
+  },
+  {
+    "name": "Manila",
+    "displayName": "马尼拉",
+    "aliases": [
+      "马尼拉",
+      "Manila"
+    ],
+    "lat": 14.5995,
+    "lon": 120.9842,
+    "country": "菲律宾"
+  },
+  {
+    "name": "Cebu",
+    "displayName": "宿务",
+    "aliases": [
+      "宿务",
+      "Cebu"
+    ],
+    "lat": 10.3157,
+    "lon": 123.8854,
+    "country": "菲律宾"
+  },
+  {
+    "name": "Boracay",
+    "displayName": "长滩岛",
+    "aliases": [
+      "长滩岛",
+      "Boracay"
+    ],
+    "lat": 11.9674,
+    "lon": 121.9248,
+    "country": "菲律宾"
+  },
+  {
+    "name": "New Delhi",
+    "displayName": "新德里",
+    "aliases": [
+      "新德里",
+      "德里",
+      "New Delhi",
+      "Delhi"
+    ],
+    "lat": 28.6139,
+    "lon": 77.209,
+    "country": "印度"
+  },
+  {
+    "name": "Mumbai",
+    "displayName": "孟买",
+    "aliases": [
+      "孟买",
+      "Mumbai",
+      "Bombay"
+    ],
+    "lat": 19.076,
+    "lon": 72.8777,
+    "country": "印度"
+  },
+  {
+    "name": "Ulaanbaatar",
+    "displayName": "乌兰巴托",
+    "aliases": [
+      "乌兰巴托",
+      "Ulaanbaatar",
+      "Ulan Bator"
+    ],
+    "lat": 47.8864,
+    "lon": 106.9057,
+    "country": "蒙古"
+  },
+  {
+    "name": "Almaty",
+    "displayName": "阿拉木图",
+    "aliases": [
+      "阿拉木图",
+      "Almaty"
+    ],
+    "lat": 43.222,
+    "lon": 76.8512,
+    "country": "哈萨克斯坦"
+  },
+  {
+    "name": "Astana",
+    "displayName": "阿斯塔纳",
+    "aliases": [
+      "阿斯塔纳",
+      "努尔苏丹",
+      "Astana",
+      "Nur-Sultan"
+    ],
+    "lat": 51.1694,
+    "lon": 71.4491,
+    "country": "哈萨克斯坦"
+  },
+  {
+    "name": "Tashkent",
+    "displayName": "塔什干",
+    "aliases": [
+      "塔什干",
+      "Tashkent"
+    ],
+    "lat": 41.2995,
+    "lon": 69.2401,
+    "country": "乌兹别克斯坦"
+  },
+  {
+    "name": "Samarkand",
+    "displayName": "撒马尔罕",
+    "aliases": [
+      "撒马尔罕",
+      "Samarkand"
+    ],
+    "lat": 39.627,
+    "lon": 66.975,
+    "country": "乌兹别克斯坦"
+  },
+  {
+    "name": "Baku",
+    "displayName": "巴库",
+    "aliases": [
+      "巴库",
+      "Baku"
+    ],
+    "lat": 40.4093,
+    "lon": 49.8671,
+    "country": "阿塞拜疆"
+  },
+  {
+    "name": "Tbilisi",
+    "displayName": "第比利斯",
+    "aliases": [
+      "第比利斯",
+      "Tbilisi"
+    ],
+    "lat": 41.7151,
+    "lon": 44.8271,
+    "country": "格鲁吉亚"
+  },
+  {
+    "name": "Yerevan",
+    "displayName": "埃里温",
+    "aliases": [
+      "埃里温",
+      "Yerevan"
+    ],
+    "lat": 40.1792,
+    "lon": 44.4991,
+    "country": "亚美尼亚"
+  },
+  {
+    "name": "Kathmandu",
+    "displayName": "加德满都",
+    "aliases": [
+      "加德满都",
+      "Kathmandu"
+    ],
+    "lat": 27.7172,
+    "lon": 85.324,
+    "country": "尼泊尔"
+  },
+  {
+    "name": "Colombo",
+    "displayName": "科伦坡",
+    "aliases": [
+      "科伦坡",
+      "Colombo"
+    ],
+    "lat": 6.9271,
+    "lon": 79.8612,
+    "country": "斯里兰卡"
+  },
+  {
+    "name": "Male",
+    "displayName": "马累",
+    "aliases": [
+      "马累",
+      "Malé",
+      "Male",
+      "马尔代夫"
+    ],
+    "lat": 4.1755,
+    "lon": 73.5093,
+    "country": "马尔代夫"
+  },
+  {
+    "name": "Dubai",
+    "displayName": "迪拜",
+    "aliases": [
+      "迪拜",
+      "Dubai"
+    ],
+    "lat": 25.2048,
+    "lon": 55.2708,
+    "country": "阿联酋"
+  },
+  {
+    "name": "Abu Dhabi",
+    "displayName": "阿布扎比",
+    "aliases": [
+      "阿布扎比",
+      "Abu Dhabi"
+    ],
+    "lat": 24.4539,
+    "lon": 54.3773,
+    "country": "阿联酋"
+  },
+  {
+    "name": "Doha",
+    "displayName": "多哈",
+    "aliases": [
+      "多哈",
+      "Doha"
+    ],
+    "lat": 25.2854,
+    "lon": 51.531,
+    "country": "卡塔尔"
+  },
+  {
+    "name": "Riyadh",
+    "displayName": "利雅得",
+    "aliases": [
+      "利雅得",
+      "Riyadh"
+    ],
+    "lat": 24.7136,
+    "lon": 46.6753,
+    "country": "沙特阿拉伯"
+  },
+  {
+    "name": "Istanbul",
+    "displayName": "伊斯坦布尔",
+    "aliases": [
+      "伊斯坦布尔",
+      "Istanbul",
+      "君士坦丁堡"
+    ],
+    "lat": 41.0082,
+    "lon": 28.9784,
+    "country": "土耳其"
+  },
+  {
+    "name": "Ankara",
+    "displayName": "安卡拉",
+    "aliases": [
+      "安卡拉",
+      "Ankara"
+    ],
+    "lat": 39.9334,
+    "lon": 32.8597,
+    "country": "土耳其"
+  },
+  {
+    "name": "Cappadocia",
+    "displayName": "卡帕多奇亚",
+    "aliases": [
+      "卡帕多奇亚",
+      "格雷梅",
+      "Cappadocia",
+      "Göreme"
+    ],
+    "lat": 38.6431,
+    "lon": 34.8289,
+    "country": "土耳其"
+  },
+  {
+    "name": "Tehran",
+    "displayName": "德黑兰",
+    "aliases": [
+      "德黑兰",
+      "Tehran"
+    ],
+    "lat": 35.6892,
+    "lon": 51.389,
+    "country": "伊朗"
+  },
+  {
+    "name": "Isfahan",
+    "displayName": "伊斯法罕",
+    "aliases": [
+      "伊斯法罕",
+      "Isfahan"
+    ],
+    "lat": 32.6546,
+    "lon": 51.668,
+    "country": "伊朗"
+  },
+  {
+    "name": "Jerusalem",
+    "displayName": "耶路撒冷",
+    "aliases": [
+      "耶路撒冷",
+      "Jerusalem"
+    ],
+    "lat": 31.7683,
+    "lon": 35.2137,
+    "country": "以色列"
+  },
+  {
+    "name": "Tel Aviv",
+    "displayName": "特拉维夫",
+    "aliases": [
+      "特拉维夫",
+      "Tel Aviv"
+    ],
+    "lat": 32.0853,
+    "lon": 34.7818,
+    "country": "以色列"
+  },
+  {
+    "name": "London",
+    "displayName": "伦敦",
+    "aliases": [
+      "伦敦",
+      "London"
+    ],
+    "lat": 51.5074,
+    "lon": -0.1278,
+    "country": "英国"
+  },
+  {
+    "name": "Edinburgh",
+    "displayName": "爱丁堡",
+    "aliases": [
+      "爱丁堡",
+      "Edinburgh"
+    ],
+    "lat": 55.9533,
+    "lon": -3.1883,
+    "country": "英国"
+  },
+  {
+    "name": "Manchester",
+    "displayName": "曼彻斯特",
+    "aliases": [
+      "曼彻斯特",
+      "Manchester"
+    ],
+    "lat": 53.4808,
+    "lon": -2.2426,
+    "country": "英国"
+  },
+  {
+    "name": "Oxford",
+    "displayName": "牛津",
+    "aliases": [
+      "牛津",
+      "Oxford"
+    ],
+    "lat": 51.752,
+    "lon": -1.2577,
+    "country": "英国"
+  },
+  {
+    "name": "Dublin",
+    "displayName": "都柏林",
+    "aliases": [
+      "都柏林",
+      "Dublin"
+    ],
+    "lat": 53.3498,
+    "lon": -6.2603,
+    "country": "爱尔兰"
+  },
+  {
+    "name": "Paris",
+    "displayName": "巴黎",
+    "aliases": [
+      "巴黎",
+      "Paris"
+    ],
+    "lat": 48.8566,
+    "lon": 2.3522,
+    "country": "法国"
+  },
+  {
+    "name": "Nice",
+    "displayName": "尼斯",
+    "aliases": [
+      "尼斯",
+      "Nice"
+    ],
+    "lat": 43.7102,
+    "lon": 7.262,
+    "country": "法国"
+  },
+  {
+    "name": "Lyon",
+    "displayName": "里昂",
+    "aliases": [
+      "里昂",
+      "Lyon"
+    ],
+    "lat": 45.764,
+    "lon": 4.8357,
+    "country": "法国"
+  },
+  {
+    "name": "Marseille",
+    "displayName": "马赛",
+    "aliases": [
+      "马赛",
+      "Marseille"
+    ],
+    "lat": 43.2965,
+    "lon": 5.3698,
+    "country": "法国"
+  },
+  {
+    "name": "Berlin",
+    "displayName": "柏林",
+    "aliases": [
+      "柏林",
+      "Berlin"
+    ],
+    "lat": 52.52,
+    "lon": 13.405,
+    "country": "德国"
+  },
+  {
+    "name": "Munich",
+    "displayName": "慕尼黑",
+    "aliases": [
+      "慕尼黑",
+      "Munich",
+      "München"
+    ],
+    "lat": 48.1351,
+    "lon": 11.582,
+    "country": "德国"
+  },
+  {
+    "name": "Frankfurt",
+    "displayName": "法兰克福",
+    "aliases": [
+      "法兰克福",
+      "Frankfurt"
+    ],
+    "lat": 50.1109,
+    "lon": 8.6821,
+    "country": "德国"
+  },
+  {
+    "name": "Hamburg",
+    "displayName": "汉堡",
+    "aliases": [
+      "汉堡",
+      "Hamburg"
+    ],
+    "lat": 53.5511,
+    "lon": 9.9937,
+    "country": "德国"
+  },
+  {
+    "name": "Rome",
+    "displayName": "罗马",
+    "aliases": [
+      "罗马",
+      "Rome",
+      "Roma"
+    ],
+    "lat": 41.9028,
+    "lon": 12.4964,
+    "country": "意大利"
+  },
+  {
+    "name": "Milan",
+    "displayName": "米兰",
+    "aliases": [
+      "米兰",
+      "Milan",
+      "Milano"
+    ],
+    "lat": 45.4642,
+    "lon": 9.19,
+    "country": "意大利"
+  },
+  {
+    "name": "Florence",
+    "displayName": "佛罗伦萨",
+    "aliases": [
+      "佛罗伦萨",
+      "翡冷翠",
+      "Florence",
+      "Firenze"
+    ],
+    "lat": 43.7696,
+    "lon": 11.2558,
+    "country": "意大利"
+  },
+  {
+    "name": "Venice",
+    "displayName": "威尼斯",
+    "aliases": [
+      "威尼斯",
+      "Venice",
+      "Venezia"
+    ],
+    "lat": 45.4408,
+    "lon": 12.3155,
+    "country": "意大利"
+  },
+  {
+    "name": "Naples",
+    "displayName": "那不勒斯",
+    "aliases": [
+      "那不勒斯",
+      "Naples",
+      "Napoli"
+    ],
+    "lat": 40.8518,
+    "lon": 14.2681,
+    "country": "意大利"
+  },
+  {
+    "name": "Madrid",
+    "displayName": "马德里",
+    "aliases": [
+      "马德里",
+      "Madrid"
+    ],
+    "lat": 40.4168,
+    "lon": -3.7038,
+    "country": "西班牙"
+  },
+  {
+    "name": "Barcelona",
+    "displayName": "巴塞罗那",
+    "aliases": [
+      "巴塞罗那",
+      "Barcelona"
+    ],
+    "lat": 41.3879,
+    "lon": 2.1699,
+    "country": "西班牙"
+  },
+  {
+    "name": "Seville",
+    "displayName": "塞维利亚",
+    "aliases": [
+      "塞维利亚",
+      "Seville",
+      "Sevilla"
+    ],
+    "lat": 37.3891,
+    "lon": -5.9845,
+    "country": "西班牙"
+  },
+  {
+    "name": "Lisbon",
+    "displayName": "里斯本",
+    "aliases": [
+      "里斯本",
+      "Lisbon",
+      "Lisboa"
+    ],
+    "lat": 38.7223,
+    "lon": -9.1393,
+    "country": "葡萄牙"
+  },
+  {
+    "name": "Porto",
+    "displayName": "波尔图",
+    "aliases": [
+      "波尔图",
+      "Porto"
+    ],
+    "lat": 41.1579,
+    "lon": -8.6291,
+    "country": "葡萄牙"
+  },
+  {
+    "name": "Amsterdam",
+    "displayName": "阿姆斯特丹",
+    "aliases": [
+      "阿姆斯特丹",
+      "Amsterdam"
+    ],
+    "lat": 52.3676,
+    "lon": 4.9041,
+    "country": "荷兰"
+  },
+  {
+    "name": "Rotterdam",
+    "displayName": "鹿特丹",
+    "aliases": [
+      "鹿特丹",
+      "Rotterdam"
+    ],
+    "lat": 51.9244,
+    "lon": 4.4777,
+    "country": "荷兰"
+  },
+  {
+    "name": "Brussels",
+    "displayName": "布鲁塞尔",
+    "aliases": [
+      "布鲁塞尔",
+      "Brussels",
+      "Bruxelles"
+    ],
+    "lat": 50.8503,
+    "lon": 4.3517,
+    "country": "比利时"
+  },
+  {
+    "name": "Vienna",
+    "displayName": "维也纳",
+    "aliases": [
+      "维也纳",
+      "Vienna",
+      "Wien"
+    ],
+    "lat": 48.2082,
+    "lon": 16.3738,
+    "country": "奥地利"
+  },
+  {
+    "name": "Salzburg",
+    "displayName": "萨尔茨堡",
+    "aliases": [
+      "萨尔茨堡",
+      "Salzburg"
+    ],
+    "lat": 47.8095,
+    "lon": 13.055,
+    "country": "奥地利"
+  },
+  {
+    "name": "Innsbruck",
+    "displayName": "因斯布鲁克",
+    "aliases": [
+      "因斯布鲁克",
+      "Innsbruck"
+    ],
+    "lat": 47.2692,
+    "lon": 11.4041,
+    "country": "奥地利"
+  },
+  {
+    "name": "Prague",
+    "displayName": "布拉格",
+    "aliases": [
+      "布拉格",
+      "Prague",
+      "Praha"
+    ],
+    "lat": 50.0755,
+    "lon": 14.4378,
+    "country": "捷克"
+  },
+  {
+    "name": "Budapest",
+    "displayName": "布达佩斯",
+    "aliases": [
+      "布达佩斯",
+      "Budapest"
+    ],
+    "lat": 47.4979,
+    "lon": 19.0402,
+    "country": "匈牙利"
+  },
+  {
+    "name": "Warsaw",
+    "displayName": "华沙",
+    "aliases": [
+      "华沙",
+      "Warsaw",
+      "Warszawa"
+    ],
+    "lat": 52.2297,
+    "lon": 21.0122,
+    "country": "波兰"
+  },
+  {
+    "name": "Krakow",
+    "displayName": "克拉科夫",
+    "aliases": [
+      "克拉科夫",
+      "Krakow",
+      "Kraków"
+    ],
+    "lat": 50.0647,
+    "lon": 19.945,
+    "country": "波兰"
+  },
+  {
+    "name": "Zurich",
+    "displayName": "苏黎世",
+    "aliases": [
+      "苏黎世",
+      "Zurich",
+      "Zürich"
+    ],
+    "lat": 47.3769,
+    "lon": 8.5417,
+    "country": "瑞士"
+  },
+  {
+    "name": "Geneva",
+    "displayName": "日内瓦",
+    "aliases": [
+      "日内瓦",
+      "Geneva",
+      "Genève"
+    ],
+    "lat": 46.2044,
+    "lon": 6.1432,
+    "country": "瑞士"
+  },
+  {
+    "name": "Lucerne",
+    "displayName": "琉森",
+    "aliases": [
+      "琉森",
+      "卢塞恩",
+      "Lucerne",
+      "Luzern"
+    ],
+    "lat": 47.0502,
+    "lon": 8.3093,
+    "country": "瑞士"
+  },
+  {
+    "name": "Interlaken",
+    "displayName": "因特拉肯",
+    "aliases": [
+      "因特拉肯",
+      "Interlaken"
+    ],
+    "lat": 46.6863,
+    "lon": 7.8632,
+    "country": "瑞士"
+  },
+  {
+    "name": "Stockholm",
+    "displayName": "斯德哥尔摩",
+    "aliases": [
+      "斯德哥尔摩",
+      "Stockholm"
+    ],
+    "lat": 59.3293,
+    "lon": 18.0686,
+    "country": "瑞典"
+  },
+  {
+    "name": "Copenhagen",
+    "displayName": "哥本哈根",
+    "aliases": [
+      "哥本哈根",
+      "Copenhagen",
+      "København"
+    ],
+    "lat": 55.6761,
+    "lon": 12.5683,
+    "country": "丹麦"
+  },
+  {
+    "name": "Helsinki",
+    "displayName": "赫尔辛基",
+    "aliases": [
+      "赫尔辛基",
+      "Helsinki"
+    ],
+    "lat": 60.1699,
+    "lon": 24.9384,
+    "country": "芬兰"
+  },
+  {
+    "name": "Rovaniemi",
+    "displayName": "罗瓦涅米",
+    "aliases": [
+      "罗瓦涅米",
+      "Rovaniemi",
+      "圣诞老人村"
+    ],
+    "lat": 66.5039,
+    "lon": 25.7294,
+    "country": "芬兰"
+  },
+  {
+    "name": "Bergen",
+    "displayName": "卑尔根",
+    "aliases": [
+      "卑尔根",
+      "Bergen"
+    ],
+    "lat": 60.3913,
+    "lon": 5.3221,
+    "country": "挪威"
+  },
+  {
+    "name": "Athens",
+    "displayName": "雅典",
+    "aliases": [
+      "雅典",
+      "Athens",
+      "Athina"
+    ],
+    "lat": 37.9838,
+    "lon": 23.7275,
+    "country": "希腊"
+  },
+  {
+    "name": "Santorini",
+    "displayName": "圣托里尼",
+    "aliases": [
+      "圣托里尼",
+      "Santorini",
+      "Thira"
+    ],
+    "lat": 36.3932,
+    "lon": 25.4615,
+    "country": "希腊"
+  },
+  {
+    "name": "Moscow",
+    "displayName": "莫斯科",
+    "aliases": [
+      "莫斯科",
+      "Moscow",
+      "Moskva"
+    ],
+    "lat": 55.7558,
+    "lon": 37.6173,
+    "country": "俄罗斯"
+  },
+  {
+    "name": "Saint Petersburg",
+    "displayName": "圣彼得堡",
+    "aliases": [
+      "圣彼得堡",
+      "Saint Petersburg",
+      "St Petersburg",
+      "列宁格勒"
+    ],
+    "lat": 59.9311,
+    "lon": 30.3609,
+    "country": "俄罗斯"
+  },
+  {
+    "name": "Vladivostok",
+    "displayName": "符拉迪沃斯托克",
+    "aliases": [
+      "符拉迪沃斯托克",
+      "海参崴",
+      "Vladivostok"
+    ],
+    "lat": 43.1155,
+    "lon": 131.8855,
+    "country": "俄罗斯"
+  },
+  {
+    "name": "Irkutsk",
+    "displayName": "伊尔库茨克",
+    "aliases": [
+      "伊尔库茨克",
+      "Irkutsk",
+      "贝加尔湖"
+    ],
+    "lat": 52.287,
+    "lon": 104.305,
+    "country": "俄罗斯"
+  },
+  {
+    "name": "New York",
+    "displayName": "纽约",
+    "aliases": [
+      "纽约",
+      "纽约市",
+      "New York",
+      "NYC"
+    ],
+    "lat": 40.7128,
+    "lon": -74.006,
+    "country": "美国"
+  },
+  {
+    "name": "Washington, D.C.",
+    "displayName": "华盛顿",
+    "aliases": [
+      "华盛顿",
+      "华盛顿特区",
+      "Washington",
+      "DC"
+    ],
+    "lat": 38.9072,
+    "lon": -77.0369,
+    "country": "美国"
+  },
+  {
+    "name": "Los Angeles",
+    "displayName": "洛杉矶",
+    "aliases": [
+      "洛杉矶",
+      "Los Angeles",
+      "LA"
+    ],
+    "lat": 34.0522,
+    "lon": -118.2437,
+    "country": "美国"
+  },
+  {
+    "name": "San Francisco",
+    "displayName": "旧金山",
+    "aliases": [
+      "旧金山",
+      "三藩市",
+      "圣弗朗西斯科",
+      "San Francisco",
+      "SF"
+    ],
+    "lat": 37.7749,
+    "lon": -122.4194,
+    "country": "美国"
+  },
+  {
+    "name": "Seattle",
+    "displayName": "西雅图",
+    "aliases": [
+      "西雅图",
+      "Seattle"
+    ],
+    "lat": 47.6062,
+    "lon": -122.3321,
+    "country": "美国"
+  },
+  {
+    "name": "Chicago",
+    "displayName": "芝加哥",
+    "aliases": [
+      "芝加哥",
+      "Chicago"
+    ],
+    "lat": 41.8781,
+    "lon": -87.6298,
+    "country": "美国"
+  },
+  {
+    "name": "Boston",
+    "displayName": "波士顿",
+    "aliases": [
+      "波士顿",
+      "Boston"
+    ],
+    "lat": 42.3601,
+    "lon": -71.0589,
+    "country": "美国"
+  },
+  {
+    "name": "Las Vegas",
+    "displayName": "拉斯维加斯",
+    "aliases": [
+      "拉斯维加斯",
+      "Las Vegas",
+      "Vegas"
+    ],
+    "lat": 36.1699,
+    "lon": -115.1398,
+    "country": "美国"
+  },
+  {
+    "name": "Honolulu",
+    "displayName": "檀香山",
+    "aliases": [
+      "檀香山",
+      "火奴鲁鲁",
+      "Honolulu",
+      "夏威夷",
+      "Hawaii"
+    ],
+    "lat": 21.3069,
+    "lon": -157.8583,
+    "country": "美国"
+  },
+  {
+    "name": "Miami",
+    "displayName": "迈阿密",
+    "aliases": [
+      "迈阿密",
+      "Miami"
+    ],
+    "lat": 25.7617,
+    "lon": -80.1918,
+    "country": "美国"
+  },
+  {
+    "name": "Toronto",
+    "displayName": "多伦多",
+    "aliases": [
+      "多伦多",
+      "Toronto"
+    ],
+    "lat": 43.6532,
+    "lon": -79.3832,
+    "country": "加拿大"
+  },
+  {
+    "name": "Vancouver",
+    "displayName": "温哥华",
+    "aliases": [
+      "温哥华",
+      "Vancouver"
+    ],
+    "lat": 49.2827,
+    "lon": -123.1207,
+    "country": "加拿大"
+  },
+  {
+    "name": "Montreal",
+    "displayName": "蒙特利尔",
+    "aliases": [
+      "蒙特利尔",
+      "Montreal",
+      "Montréal"
+    ],
+    "lat": 45.5017,
+    "lon": -73.5673,
+    "country": "加拿大"
+  },
+  {
+    "name": "Ottawa",
+    "displayName": "渥太华",
+    "aliases": [
+      "渥太华",
+      "Ottawa"
+    ],
+    "lat": 45.4215,
+    "lon": -75.6972,
+    "country": "加拿大"
+  },
+  {
+    "name": "Calgary",
+    "displayName": "卡尔加里",
+    "aliases": [
+      "卡尔加里",
+      "Calgary",
+      "班夫",
+      "Banff"
+    ],
+    "lat": 51.0447,
+    "lon": -114.0719,
+    "country": "加拿大"
+  },
+  {
+    "name": "Yellowknife",
+    "displayName": "耶洛奈夫",
+    "aliases": [
+      "耶洛奈夫",
+      "黄刀镇",
+      "Yellowknife"
+    ],
+    "lat": 62.454,
+    "lon": -114.3718,
+    "country": "加拿大"
+  },
+  {
+    "name": "Anchorage",
+    "displayName": "安克雷奇",
+    "aliases": [
+      "安克雷奇",
+      "Anchorage",
+      "阿拉斯加"
+    ],
+    "lat": 61.2181,
+    "lon": -149.9003,
+    "country": "美国"
+  },
+  {
+    "name": "Fairbanks",
+    "displayName": "费尔班克斯",
+    "aliases": [
+      "费尔班克斯",
+      "Fairbanks"
+    ],
+    "lat": 64.8378,
+    "lon": -147.7164,
+    "country": "美国"
+  },
+  {
+    "name": "Mexico City",
+    "displayName": "墨西哥城",
+    "aliases": [
+      "墨西哥城",
+      "Mexico City",
+      "Ciudad de México"
+    ],
+    "lat": 19.4326,
+    "lon": -99.1332,
+    "country": "墨西哥"
+  },
+  {
+    "name": "Cancun",
+    "displayName": "坎昆",
+    "aliases": [
+      "坎昆",
+      "Cancun",
+      "Cancún"
+    ],
+    "lat": 21.1619,
+    "lon": -86.8515,
+    "country": "墨西哥"
+  },
+  {
+    "name": "Havana",
+    "displayName": "哈瓦那",
+    "aliases": [
+      "哈瓦那",
+      "Havana",
+      "La Habana"
+    ],
+    "lat": 23.1136,
+    "lon": -82.3666,
+    "country": "古巴"
+  },
+  {
+    "name": "Buenos Aires",
+    "displayName": "布宜诺斯艾利斯",
+    "aliases": [
+      "布宜诺斯艾利斯",
+      "Buenos Aires"
+    ],
+    "lat": -34.6037,
+    "lon": -58.3816,
+    "country": "阿根廷"
+  },
+  {
+    "name": "Rio de Janeiro",
+    "displayName": "里约热内卢",
+    "aliases": [
+      "里约热内卢",
+      "里约",
+      "Rio de Janeiro",
+      "Rio"
+    ],
+    "lat": -22.9068,
+    "lon": -43.1729,
+    "country": "巴西"
+  },
+  {
+    "name": "São Paulo",
+    "displayName": "圣保罗",
+    "aliases": [
+      "圣保罗",
+      "Sao Paulo",
+      "São Paulo"
+    ],
+    "lat": -23.5505,
+    "lon": -46.6333,
+    "country": "巴西"
+  },
+  {
+    "name": "Santiago",
+    "displayName": "圣地亚哥",
+    "aliases": [
+      "圣地亚哥",
+      "Santiago"
+    ],
+    "lat": -33.4489,
+    "lon": -70.6693,
+    "country": "智利"
+  },
+  {
+    "name": "Lima",
+    "displayName": "利马",
+    "aliases": [
+      "利马",
+      "Lima"
+    ],
+    "lat": -12.0464,
+    "lon": -77.0428,
+    "country": "秘鲁"
+  },
+  {
+    "name": "Cusco",
+    "displayName": "库斯科",
+    "aliases": [
+      "库斯科",
+      "Cusco",
+      "马丘比丘",
+      "Machu Picchu"
+    ],
+    "lat": -13.5319,
+    "lon": -71.9675,
+    "country": "秘鲁"
+  },
+  {
+    "name": "Bogota",
+    "displayName": "波哥大",
+    "aliases": [
+      "波哥大",
+      "Bogotá",
+      "Bogota"
+    ],
+    "lat": 4.711,
+    "lon": -74.0721,
+    "country": "哥伦比亚"
+  },
+  {
+    "name": "Sydney",
+    "displayName": "悉尼",
+    "aliases": [
+      "悉尼",
+      "雪梨",
+      "Sydney"
+    ],
+    "lat": -33.8688,
+    "lon": 151.2093,
+    "country": "澳大利亚"
+  },
+  {
+    "name": "Melbourne",
+    "displayName": "墨尔本",
+    "aliases": [
+      "墨尔本",
+      "Melbourne"
+    ],
+    "lat": -37.8136,
+    "lon": 144.9631,
+    "country": "澳大利亚"
+  },
+  {
+    "name": "Brisbane",
+    "displayName": "布里斯班",
+    "aliases": [
+      "布里斯班",
+      "Brisbane"
+    ],
+    "lat": -27.4698,
+    "lon": 153.0251,
+    "country": "澳大利亚"
+  },
+  {
+    "name": "Perth",
+    "displayName": "珀斯",
+    "aliases": [
+      "珀斯",
+      "Perth"
+    ],
+    "lat": -31.9505,
+    "lon": 115.8605,
+    "country": "澳大利亚"
+  },
+  {
+    "name": "Cairns",
+    "displayName": "凯恩斯",
+    "aliases": [
+      "凯恩斯",
+      "Cairns",
+      "大堡礁"
+    ],
+    "lat": -16.9186,
+    "lon": 145.7781,
+    "country": "澳大利亚"
+  },
+  {
+    "name": "Auckland",
+    "displayName": "奥克兰",
+    "aliases": [
+      "奥克兰",
+      "Auckland"
+    ],
+    "lat": -36.8485,
+    "lon": 174.7633,
+    "country": "新西兰"
+  },
+  {
+    "name": "Queenstown",
+    "displayName": "皇后镇",
+    "aliases": [
+      "皇后镇",
+      "Queenstown"
+    ],
+    "lat": -45.0312,
+    "lon": 168.6626,
+    "country": "新西兰"
+  },
+  {
+    "name": "Wellington",
+    "displayName": "惠灵顿",
+    "aliases": [
+      "惠灵顿",
+      "Wellington"
+    ],
+    "lat": -41.2865,
+    "lon": 174.7762,
+    "country": "新西兰"
+  },
+  {
+    "name": "Christchurch",
+    "displayName": "基督城",
+    "aliases": [
+      "基督城",
+      "Christchurch"
+    ],
+    "lat": -43.5321,
+    "lon": 172.6362,
+    "country": "新西兰"
+  },
+  {
+    "name": "Cairo",
+    "displayName": "开罗",
+    "aliases": [
+      "开罗",
+      "Cairo"
+    ],
+    "lat": 30.0444,
+    "lon": 31.2357,
+    "country": "埃及"
+  },
+  {
+    "name": "Cape Town",
+    "displayName": "开普敦",
+    "aliases": [
+      "开普敦",
+      "Cape Town",
+      "好望角"
+    ],
+    "lat": -33.9249,
+    "lon": 18.4241,
+    "country": "南非"
+  },
+  {
+    "name": "Johannesburg",
+    "displayName": "约翰内斯堡",
+    "aliases": [
+      "约翰内斯堡",
+      "Johannesburg"
+    ],
+    "lat": -26.2041,
+    "lon": 28.0473,
+    "country": "南非"
+  },
+  {
+    "name": "Nairobi",
+    "displayName": "内罗毕",
+    "aliases": [
+      "内罗毕",
+      "Nairobi"
+    ],
+    "lat": -1.2921,
+    "lon": 36.8219,
+    "country": "肯尼亚"
+  },
+  {
+    "name": "Casablanca",
+    "displayName": "卡萨布兰卡",
+    "aliases": [
+      "卡萨布兰卡",
+      "Casablanca"
+    ],
+    "lat": 33.5731,
+    "lon": -7.5898,
+    "country": "摩洛哥"
+  },
+  {
+    "name": "Marrakech",
+    "displayName": "马拉喀什",
+    "aliases": [
+      "马拉喀什",
+      "Marrakech"
+    ],
+    "lat": 31.6295,
+    "lon": -7.9811,
+    "country": "摩洛哥"
+  }
+]
