@@ -17,6 +17,11 @@ import { MarkerOverlay } from '../overlay/MarkerOverlay';
 import { LabelOverlay } from '../overlay/LabelOverlay';
 import { RouteOverlay } from '../overlay/RouteOverlay';
 import { Maximize2, ZoomIn, ZoomOut, RotateCcw, Compass, MapPin } from 'lucide-react';
+import { getAssetUrl } from '../utils/assets';
+
+// MapLibre v6 ships its worker and shared runtime as separate modules. The
+// Vite plugin in vite.config.ts publishes both under this stable assets path.
+maplibregl.setWorkerUrl(getAssetUrl('assets/maplibre-gl-worker.mjs'));
 
 interface MapLibreGlobalViewProps {
   places: Place[];
@@ -257,6 +262,7 @@ export const MapLibreGlobalView: React.FC<MapLibreGlobalViewProps> = ({
     <div
       ref={containerRef}
       id="maplibre-global-root"
+      data-map-loaded={mapLoaded ? 'true' : 'false'}
       className="relative w-full h-full bg-slate-100 overflow-hidden select-none"
     >
       {/* MapLibre WebGL Canvas Container */}
