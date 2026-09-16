@@ -8,16 +8,18 @@ import {
   LabelStyle,
   BasemapConfig,
   CameraState,
-  OverlayScaleMode,
   CalibrationPoint,
-  CalibratedImageBasemap
+  CalibratedImageBasemap,
+  MapLibreViewState,
+  ImageViewState,
 } from './types';
+import { migrateProjectV2ToV3 } from './types/migration';
 import { useHistory } from './editor/useHistory';
 import { PlaceList } from './editor/PlaceList';
 import { BasemapPanel } from './editor/BasemapPanel';
 import { StylePanel } from './editor/StylePanel';
 import { ProjectPanel } from './editor/ProjectPanel';
-import { MapCanvas } from './map/MapCanvas';
+import { MapViewport } from './map/MapViewport';
 import { ExportModal } from './export/ExportModal';
 import { ConfirmModal } from './editor/ConfirmModal';
 import { AmbiguityModal } from './editor/AmbiguityModal';
@@ -34,10 +36,12 @@ import {
   Undo2,
   Redo2,
   Download,
-  Plane
+  Plane,
 } from 'lucide-react';
 
-const STORAGE_KEY = 'travel_map_project_v2';
+const STORAGE_KEY_V3 = 'travel_map_project_v3';
+const STORAGE_KEY_V2 = 'travel_map_project_v2';
+const INIT_FLAG_KEY = 'travel_map_has_initialized_v3';
 
 const defaultRouteStyle: RouteStyle = {
   type: 'curved',
@@ -46,7 +50,7 @@ const defaultRouteStyle: RouteStyle = {
   strokeWidth: 2.5,
   strokeOpacity: 0.9,
   dashStyle: 'solid',
-  showArrows: true
+  showArrows: true,
 };
 
 const defaultMarkerStyle: MarkerStyle = {
@@ -54,7 +58,7 @@ const defaultMarkerStyle: MarkerStyle = {
   color: '#e63946',
   size: 7,
   strokeColor: '#ffffff',
-  strokeWidth: 2
+  strokeWidth: 2,
 };
 
 const defaultLabelStyle: LabelStyle = {
@@ -62,35 +66,40 @@ const defaultLabelStyle: LabelStyle = {
   color: '#1e293b',
   showHalo: true,
   fontWeight: 'medium',
-  autoAvoidCollisions: true
+  autoAvoidCollisions: true,
 };
 
 const defaultBasemap: BasemapConfig = {
-  type: 'builtin',
-  mapId: 'world',
-  projection: 'equalEarth',
-  region: 'world',
-  landColor: '#f1efe8',
-  borderColor: '#d5d2c8',
-  oceanColor: '#ffffff'
+  type: 'builtin-maplibre',
+  styleId: 'travel-clean',
+  enableCountryFill: true,
+  showAdmin1: true,
 };
 
 const defaultCamera: CameraState = {
   zoom: 1,
   panX: 0,
-  panY: 0
+  panY: 0,
 };
 
 const initialProject: ProjectData = {
-  version: '2.0',
+  version: '3.0',
   title: '我的旅行路线',
   places: [],
   basemap: defaultBasemap,
   camera: defaultCamera,
+  views: {
+    builtin: {
+      center: [20, 20],
+      zoom: 1.8,
+      bearing: 0,
+      pitch: 0,
+    },
+  },
   routeStyle: defaultRouteStyle,
   markerStyle: defaultMarkerStyle,
   labelStyle: defaultLabelStyle,
-  overlayScaleMode: 'screen-fixed'
+  overlayScaleMode: 'screen-fixed',
 };
 
 export const App: React.FC = () => {
@@ -103,29 +112,40 @@ export const App: React.FC = () => {
     undo,
     redo,
     canUndo,
-    canRedo
+    canRedo,
   } = useHistory<ProjectData>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      // 1. Try V3 storage first
+      const savedV3 = localStorage.getItem(STORAGE_KEY_V3);
+      if (savedV3) {
+        const parsed = JSON.parse(savedV3);
         if (parsed && Array.isArray(parsed.places)) {
-          return {
-            ...initialProject,
-            ...parsed,
-            basemap: parsed.basemap || defaultBasemap,
-            camera: parsed.camera || defaultCamera
-          };
+          return migrateProjectV2ToV3(parsed);
         }
       }
-    } catch {}
+
+      // 2. Try V2 legacy storage and migrate
+      const savedV2 = localStorage.getItem(STORAGE_KEY_V2);
+      if (savedV2) {
+        const parsed = JSON.parse(savedV2);
+        if (parsed && Array.isArray(parsed.places)) {
+          return migrateProjectV2ToV3(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn('Error loading saved project:', e);
+    }
     return initialProject;
-  }, STORAGE_KEY);
+  }, STORAGE_KEY_V3);
 
   const [activeTab, setActiveTab] = useState<'places' | 'basemap' | 'style' | 'project'>('places');
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
-  const [ambiguousPlace, setAmbiguousPlace] = useState<{ id: string; name: string; candidates: PlaceRecord[] } | null>(null);
+  const [ambiguousPlace, setAmbiguousPlace] = useState<{
+    id: string;
+    name: string;
+    candidates: PlaceRecord[];
+  } | null>(null);
   const [pickingPlaceId, setPickingPlaceId] = useState<string | null>(null);
 
   // Preload places database on startup
@@ -136,68 +156,77 @@ export const App: React.FC = () => {
   // Restore image url from IndexedDB or official registry if basemap is custom image
   useEffect(() => {
     const bm = project.basemap;
-    if (bm.type !== 'builtin' && (bm as any).assetId && !(bm as any).imageUrl) {
-      // Check official registry first
-      const official = OFFICIAL_BASEMAP_REGISTRY.find(o => o.id === (bm as any).assetId);
-      if (official && official.assetPath) {
-        setProject(prev => ({
-          ...prev,
-          basemap: { ...prev.basemap, imageUrl: official.assetPath } as any
-        }));
-        return;
-      }
-
-      getImageObjectUrl((bm as any).assetId).then(url => {
-        if (url) {
-          setProject(prev => ({
+    if (
+      bm.type === 'free-image' ||
+      bm.type === 'equirectangular-image' ||
+      bm.type === 'calibrated-image'
+    ) {
+      if ((bm as any).assetId && !(bm as any).imageUrl) {
+        const official = OFFICIAL_BASEMAP_REGISTRY.find((o) => o.id === (bm as any).assetId);
+        if (official && official.assetPath) {
+          setProject((prev) => ({
             ...prev,
-            basemap: { ...prev.basemap, imageUrl: url } as any
+            basemap: { ...prev.basemap, imageUrl: official.assetPath } as any,
           }));
+          return;
         }
-      });
+
+        getImageObjectUrl((bm as any).assetId).then((url) => {
+          if (url) {
+            setProject((prev) => ({
+              ...prev,
+              basemap: { ...prev.basemap, imageUrl: url } as any,
+            }));
+          }
+        });
+      }
     }
   }, [project.basemap, setProject]);
 
-  // Initial load sample preset if first time empty
+  // Initial load sample preset ONLY on true first startup (prevents re-spawning sample after user clears)
   useEffect(() => {
-    if (project.places.length === 0) {
-      const sampleText = `东京\n43.0618, 141.3545 | 札幌\n奥斯陆\n64.1466, -21.9426 | 雷克雅未克\n78.2232, 15.6469 | 朗伊尔城`;
-      parseInputText(sampleText, []).then(parsedPlaces => {
-        setProject(prev => ({
-          ...prev,
-          places: parsedPlaces
-        }));
-      });
+    const hasInitialized = localStorage.getItem(INIT_FLAG_KEY);
+    if (!hasInitialized) {
+      localStorage.setItem(INIT_FLAG_KEY, 'true');
+      if (project.places.length === 0) {
+        const sampleText = `东京\n43.0618, 141.3545 | 札幌\n奥斯陆\n64.1466, -21.9426 | 雷克雅未克\n78.2232, 15.6469 | 朗伊尔城`;
+        parseInputText(sampleText, []).then((parsedPlaces) => {
+          setProject((prev) => ({
+            ...prev,
+            places: parsedPlaces,
+          }));
+        });
+      }
     }
-  }, []);
+  }, [project.places.length, setProject]);
 
   // Batch input update
   const handleBatchUpdate = async (inputText: string) => {
     const newPlaces = await parseInputText(inputText, project.places);
-    setProject(prev => ({
+    setProject((prev) => ({
       ...prev,
-      places: [...prev.places, ...newPlaces]
+      places: [...prev.places, ...newPlaces],
     }));
   };
 
   const handleReorderPlaces = (newPlaces: Place[]) => {
-    setProject(prev => ({
+    setProject((prev) => ({
       ...prev,
-      places: newPlaces
+      places: newPlaces,
     }));
   };
 
   const handleDeletePlace = (placeId: string) => {
-    setProject(prev => ({
+    setProject((prev) => ({
       ...prev,
-      places: prev.places.filter(p => p.id !== placeId).map((p, idx) => ({ ...p, order: idx }))
+      places: prev.places.filter((p) => p.id !== placeId).map((p, idx) => ({ ...p, order: idx })),
     }));
   };
 
   const handleResetPlaceOffset = (placeId: string) => {
-    setProject(prev => ({
+    setProject((prev) => ({
       ...prev,
-      places: prev.places.map(p =>
+      places: prev.places.map((p) =>
         p.id === placeId
           ? {
               ...p,
@@ -206,10 +235,10 @@ export const App: React.FC = () => {
               manualOffsetX: 0,
               manualOffsetY: 0,
               labelOffsetX: 12,
-              labelOffsetY: -12
+              labelOffsetY: -12,
             }
           : p
-      )
+      ),
     }));
   };
 
@@ -218,68 +247,143 @@ export const App: React.FC = () => {
     beginTransaction();
   }, [beginTransaction]);
 
-  const handleMarkerDragMove = useCallback((placeId: string, x: number, y: number) => {
-    setTransient(prev => ({
-      ...prev,
-      places: prev.places.map(p =>
-        p.id === placeId
-          ? { ...p, markerMapOffsetX: x, markerMapOffsetY: y, manualOffsetX: x, manualOffsetY: y }
-          : p
-      )
-    }));
-  }, [setTransient]);
+  const handleMarkerDragMove = useCallback(
+    (placeId: string, mapDx: number, mapDy: number) => {
+      setTransient((prev) => ({
+        ...prev,
+        places: prev.places.map((p) =>
+          p.id === placeId
+            ? {
+                ...p,
+                markerMapOffsetX: (p.markerMapOffsetX || 0) + mapDx,
+                markerMapOffsetY: (p.markerMapOffsetY || 0) + mapDy,
+              }
+            : p
+        ),
+      }));
+    },
+    [setTransient]
+  );
 
-  const handleMarkerDragEnd = useCallback((placeId: string, x: number, y: number) => {
-    commitTransaction(prev => ({
-      ...prev,
-      places: prev.places.map(p =>
-        p.id === placeId
-          ? { ...p, markerMapOffsetX: x, markerMapOffsetY: y, manualOffsetX: x, manualOffsetY: y }
-          : p
-      )
-    }));
-  }, [commitTransaction]);
+  const handleMarkerDragEnd = useCallback(
+    (placeId: string, mapDx: number, mapDy: number) => {
+      commitTransaction((prev) => ({
+        ...prev,
+        places: prev.places.map((p) =>
+          p.id === placeId
+            ? {
+                ...p,
+                markerMapOffsetX: (p.markerMapOffsetX || 0) + mapDx,
+                markerMapOffsetY: (p.markerMapOffsetY || 0) + mapDy,
+              }
+            : p
+        ),
+      }));
+    },
+    [commitTransaction]
+  );
 
-  const handleLabelDragMove = useCallback((placeId: string, x: number, y: number) => {
-    setTransient(prev => ({
-      ...prev,
-      places: prev.places.map(p => (p.id === placeId ? { ...p, labelOffsetX: x, labelOffsetY: y } : p))
-    }));
-  }, [setTransient]);
+  const handleLabelDragMove = useCallback(
+    (placeId: string, x: number, y: number) => {
+      setTransient((prev) => ({
+        ...prev,
+        places: prev.places.map((p) =>
+          p.id === placeId ? { ...p, labelOffsetX: x, labelOffsetY: y } : p
+        ),
+      }));
+    },
+    [setTransient]
+  );
 
-  const handleLabelDragEnd = useCallback((placeId: string, x: number, y: number) => {
-    commitTransaction(prev => ({
-      ...prev,
-      places: prev.places.map(p => (p.id === placeId ? { ...p, labelOffsetX: x, labelOffsetY: y } : p))
-    }));
-  }, [commitTransaction]);
+  const handleLabelDragEnd = useCallback(
+    (placeId: string, x: number, y: number) => {
+      commitTransaction((prev) => ({
+        ...prev,
+        places: prev.places.map((p) =>
+          p.id === placeId ? { ...p, labelOffsetX: x, labelOffsetY: y } : p
+        ),
+      }));
+    },
+    [commitTransaction]
+  );
+
+  // Decoupled Camera View State Handlers (DO NOT PUSH TO UNDO HISTORY)
+  const handleMapLibreViewStateChange = useCallback(
+    (vs: MapLibreViewState) => {
+      setTransient((prev) => ({
+        ...prev,
+        views: {
+          ...prev.views,
+          builtin: vs,
+        },
+      }));
+    },
+    [setTransient]
+  );
+
+  const handleImageViewStateChange = useCallback(
+    (vs: ImageViewState) => {
+      setTransient((prev) => ({
+        ...prev,
+        views: {
+          ...prev.views,
+          image: vs,
+        },
+      }));
+    },
+    [setTransient]
+  );
+
+  const handlePolarCameraChange = useCallback(
+    (cam: CameraState) => {
+      setTransient((prev) => ({
+        ...prev,
+        views: {
+          ...prev.views,
+          polar: cam,
+        },
+        camera: cam,
+      }));
+    },
+    [setTransient]
+  );
 
   // Fit view to entire image
-  const handleFitToImage = useCallback((w?: number, h?: number) => {
-    const imgW = w || (project.basemap as any).imageWidth || 1200;
-    const imgH = h || (project.basemap as any).imageHeight || 800;
-    const fit = calculateFitToImage(imgW, imgH, imgW, imgH);
-    setProject(prev => ({
-      ...prev,
-      camera: { zoom: 1, panX: 0, panY: 0 }
-    }));
-  }, [project.basemap, setProject]);
+  const handleFitToImage = useCallback(
+    (w?: number, h?: number) => {
+      const imgW = w || (project.basemap as any).imageWidth || 1200;
+      const imgH = h || (project.basemap as any).imageHeight || 800;
+      const fit = calculateFitToImage(imgW, imgH, imgW, imgH);
+      handleImageViewStateChange({
+        zoom: fit.zoom,
+        panX: fit.panX,
+        panY: fit.panY,
+      });
+    },
+    [project.basemap, handleImageViewStateChange]
+  );
 
   // Point picking for custom basemaps (both free-image & calibrated-image)
-  const handlePlacePicked = (placeId: string, imgX: number, imgY: number, normX: number, normY: number) => {
+  const handlePlacePicked = (
+    placeId: string,
+    imgX: number,
+    imgY: number,
+    normX: number,
+    normY: number
+  ) => {
     if (project.basemap.type === 'calibrated-image') {
-      const place = project.places.find(p => p.id === placeId);
+      const place = project.places.find((p) => p.id === placeId);
       if (!place) return;
 
       const currentPoints = project.basemap.controlPoints || [];
-      const filtered = currentPoints.filter(cp => cp.placeId !== placeId);
+      const filtered = currentPoints.filter((cp) => cp.placeId !== placeId);
       const newPoint: CalibrationPoint = {
         placeId: place.id,
         name: place.displayName,
         lat: place.lat,
         lon: place.lon,
         imageX: imgX,
-        imageY: imgY
+        imageY: imgY,
       };
       const updatedPoints = [...filtered, newPoint];
 
@@ -294,38 +398,42 @@ export const App: React.FC = () => {
         }
       }
 
-      setProject(prev => ({
+      setProject((prev) => ({
         ...prev,
         basemap: {
           ...prev.basemap,
           controlPoints: updatedPoints,
           transform: newTransform,
-          errorPx: newError
+          errorPx: newError,
         } as CalibratedImageBasemap,
-        places: prev.places.map(p =>
-          p.id === placeId ? { ...p, status: 'resolved' } : p
-        )
+        places: prev.places.map((p) =>
+          p.id === placeId ? { ...p, status: 'resolved', visualStatus: 'placed' } : p
+        ),
       }));
       setPickingPlaceId(null);
       return;
     }
 
     // Free image mode:
-    setProject(prev => ({
+    setProject((prev) => ({
       ...prev,
-      places: prev.places.map(p =>
+      places: prev.places.map((p) =>
         p.id === placeId
-          ? { ...p, visualPosition: { x: normX, y: normY }, status: 'resolved' }
+          ? {
+              ...p,
+              visualPosition: { x: normX, y: normY },
+              visualStatus: 'placed',
+            }
           : p
-      )
+      ),
     }));
     setPickingPlaceId(null);
   };
 
   const handleResolveAmbiguity = (placeId: string, candidate: PlaceRecord) => {
-    setProject(prev => ({
+    setProject((prev) => ({
       ...prev,
-      places: prev.places.map(p => {
+      places: prev.places.map((p) => {
         if (p.id !== placeId) return p;
         return {
           ...p,
@@ -334,26 +442,28 @@ export const App: React.FC = () => {
           lat: candidate.lat,
           lon: candidate.lon,
           country: candidate.country,
-          status: 'resolved'
+          status: 'resolved',
+          geoStatus: 'resolved',
         };
-      })
+      }),
     }));
     setAmbiguousPlace(null);
   };
 
   const handleManualResolveCoord = (placeId: string, lat: number, lon: number) => {
-    setProject(prev => ({
+    setProject((prev) => ({
       ...prev,
-      places: prev.places.map(p => {
+      places: prev.places.map((p) => {
         if (p.id !== placeId) return p;
         return {
           ...p,
           lat,
           lon,
           source: 'manual',
-          status: 'resolved'
+          status: 'resolved',
+          geoStatus: 'resolved',
         };
-      })
+      }),
     }));
   };
 
@@ -364,35 +474,69 @@ export const App: React.FC = () => {
 
     if (presetId === 'oceania_island') {
       presetText = `悉尼\n奥克兰\n楠迪\n努库阿洛法`;
-      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'oceania', showAdmin1: true };
+      newBasemap = {
+        type: 'builtin-maplibre',
+        styleId: 'travel-clean',
+        enableCountryFill: true,
+        showAdmin1: true,
+      };
     } else if (presetId === 'antarctica_pole') {
       presetText = `乌斯怀亚\n长城站\n阿蒙森-斯科特南极站`;
-      newBasemap = { ...defaultBasemap, projection: 'stereographic', region: 'antarctica', showAdmin1: false };
+      newBasemap = {
+        type: 'polar',
+        pole: 'south',
+        projection: 'stereographic',
+        oceanColor: '#e0f2fe',
+        landColor: '#ffffff',
+        borderColor: '#cbd5e1',
+      };
     } else if (presetId === 'antimeridian') {
       presetText = `东京\n安克雷奇`;
-      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'world' };
+      newBasemap = {
+        type: 'builtin-maplibre',
+        styleId: 'travel-clean',
+        enableCountryFill: true,
+        showAdmin1: true,
+      };
     } else if (presetId === 'spec_v1') {
       presetText = `东京\n43.0618, 141.3545 | 札幌\n奥斯陆\n64.1466, -21.9426 | 雷克雅未克\n78.2232, 15.6469 | 朗伊尔城`;
-      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'world' };
+      newBasemap = {
+        type: 'builtin-maplibre',
+        styleId: 'travel-clean',
+        enableCountryFill: true,
+        showAdmin1: true,
+      };
     } else if (presetId === 'silkroad') {
       presetText = `西安\n敦煌\n喀什\n撒马尔罕\n伊斯坦布尔\n罗马`;
-      newBasemap = { ...defaultBasemap, projection: 'equalEarth', region: 'asia', showAdmin1: true };
+      newBasemap = {
+        type: 'builtin-maplibre',
+        styleId: 'travel-clean',
+        enableCountryFill: true,
+        showAdmin1: true,
+      };
     }
 
     const parsed = await parseInputText(presetText);
-    setProject(prev => ({
+    setProject((prev) => ({
       ...prev,
       places: parsed,
       basemap: newBasemap,
-      camera: defaultCamera
+      views: {
+        builtin: {
+          center: [20, 20],
+          zoom: 2,
+          bearing: 0,
+          pitch: 0,
+        },
+      },
     }));
     setActiveTab('places');
   };
 
   const handleClearAllConfirmed = () => {
-    setProject(prev => ({
+    setProject((prev) => ({
       ...prev,
-      places: []
+      places: [],
     }));
     setIsConfirmResetOpen(false);
   };
@@ -409,10 +553,12 @@ export const App: React.FC = () => {
             <h1 className="text-sm font-bold text-slate-800 tracking-tight flex items-center space-x-2">
               <span>旅行足迹 / 路线地图生成器</span>
               <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-mono font-normal">
-                V2.0 Pro
+                V3.0 Hybrid Pro
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400">轻量中文经纬度与自定义底图视觉编辑器 · 纯前端纯本地</p>
+            <p className="text-[11px] text-slate-400">
+              全球连续矢量瓦片底图 · SVG 旅行覆盖层 · 极地与自定义底图双引擎
+            </p>
           </div>
         </div>
 
@@ -424,7 +570,7 @@ export const App: React.FC = () => {
               onClick={undo}
               disabled={!canUndo}
               className="p-1.5 rounded text-slate-600 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent transition"
-              title="撤销 (Ctrl+Z - 一步还原一次拖动)"
+              title="撤销 (Ctrl+Z - 一步还原一次修改)"
             >
               <Undo2 size={16} />
             </button>
@@ -509,7 +655,7 @@ export const App: React.FC = () => {
             {activeTab === 'places' && (
               <PlaceList
                 places={project.places}
-                onAddPlace={line => handleBatchUpdate(line)}
+                onAddPlace={(line) => handleBatchUpdate(line)}
                 onBatchUpdate={handleBatchUpdate}
                 onReorderPlaces={handleReorderPlaces}
                 onDeletePlace={handleDeletePlace}
@@ -526,7 +672,9 @@ export const App: React.FC = () => {
                 places={project.places}
                 pickingPlaceId={pickingPlaceId}
                 onSelectPickingPlace={setPickingPlaceId}
-                onChangeBasemap={newBasemap => setProject(prev => ({ ...prev, basemap: newBasemap }))}
+                onChangeBasemap={(newBasemap) =>
+                  setProject((prev) => ({ ...prev, basemap: newBasemap }))
+                }
                 onFitImage={handleFitToImage}
               />
             )}
@@ -538,17 +686,34 @@ export const App: React.FC = () => {
                 labelStyle={project.labelStyle}
                 overlayScaleMode={project.overlayScaleMode}
                 basemapType={project.basemap.type}
-                onChangeRouteStyle={stl => setProject(prev => ({ ...prev, routeStyle: { ...prev.routeStyle, ...stl } }))}
-                onChangeMarkerStyle={stl => setProject(prev => ({ ...prev, markerStyle: { ...prev.markerStyle, ...stl } }))}
-                onChangeLabelStyle={stl => setProject(prev => ({ ...prev, labelStyle: { ...prev.labelStyle, ...stl } }))}
-                onChangeOverlayScaleMode={mode => setProject(prev => ({ ...prev, overlayScaleMode: mode }))}
+                onChangeRouteStyle={(stl) =>
+                  setProject((prev) => ({
+                    ...prev,
+                    routeStyle: { ...prev.routeStyle, ...stl },
+                  }))
+                }
+                onChangeMarkerStyle={(stl) =>
+                  setProject((prev) => ({
+                    ...prev,
+                    markerStyle: { ...prev.markerStyle, ...stl },
+                  }))
+                }
+                onChangeLabelStyle={(stl) =>
+                  setProject((prev) => ({
+                    ...prev,
+                    labelStyle: { ...prev.labelStyle, ...stl },
+                  }))
+                }
+                onChangeOverlayScaleMode={(mode) =>
+                  setProject((prev) => ({ ...prev, overlayScaleMode: mode }))
+                }
               />
             )}
 
             {activeTab === 'project' && (
               <ProjectPanel
                 projectData={project}
-                onImportProject={data => setProject(data)}
+                onImportProject={(data) => setProject(migrateProjectV2ToV3(data))}
                 onRequestReset={() => setIsConfirmResetOpen(true)}
                 onLoadPreset={handleLoadPreset}
               />
@@ -556,22 +721,18 @@ export const App: React.FC = () => {
           </div>
         </aside>
 
-        {/* Right Map Canvas */}
+        {/* Right Map Canvas (Routed through MapViewport) */}
         <main className="flex-1 h-full overflow-hidden relative">
-          <MapCanvas
-            places={project.places}
-            basemap={project.basemap}
-            camera={project.camera}
-            routeStyle={project.routeStyle}
-            markerStyle={project.markerStyle}
-            labelStyle={project.labelStyle}
-            overlayScaleMode={project.overlayScaleMode}
+          <MapViewport
+            project={project}
             pickingPlaceId={pickingPlaceId}
             onPlacePicked={handlePlacePicked}
-            onCameraChange={newCamera => setProject(prev => ({ ...prev, camera: newCamera }))}
-            onDragStart={handleDragStart}
+            onMapLibreViewStateChange={handleMapLibreViewStateChange}
+            onImageViewStateChange={handleImageViewStateChange}
+            onPolarCameraChange={handlePolarCameraChange}
             onMarkerDragMove={handleMarkerDragMove}
             onMarkerDragEnd={handleMarkerDragEnd}
+            onLabelDragStart={handleDragStart}
             onLabelDragMove={handleLabelDragMove}
             onLabelDragEnd={handleLabelDragEnd}
           />
@@ -602,7 +763,7 @@ export const App: React.FC = () => {
           isOpen={true}
           placeName={ambiguousPlace.name}
           candidates={ambiguousPlace.candidates}
-          onSelectCandidate={cand => handleResolveAmbiguity(ambiguousPlace.id, cand)}
+          onSelectCandidate={(cand) => handleResolveAmbiguity(ambiguousPlace.id, cand)}
           onCancel={() => setAmbiguousPlace(null)}
         />
       )}

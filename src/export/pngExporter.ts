@@ -6,7 +6,8 @@ export interface ExportPngOptions {
 }
 
 /**
- * Exports the map as a high-resolution PNG image
+ * Exports the map as a high-resolution PNG image.
+ * Supports compositing MapLibre WebGL canvas with SVG Travel Overlay.
  */
 export async function exportMapAsPNG(
   svgElementId: string = 'travel-map-svg',
@@ -22,8 +23,12 @@ export async function exportMapAsPNG(
     scale = 2,
     customWidth,
     transparentRouteOnly = false,
-    filename = 'travel-map.png'
+    filename = 'travel-map.png',
   } = options;
+
+  const mapLibreCanvas = document.querySelector(
+    '#maplibre-canvas-container canvas'
+  ) as HTMLCanvasElement | null;
 
   const clonedSvg = originalSvg.cloneNode(true) as SVGSVGElement;
   clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -31,11 +36,11 @@ export async function exportMapAsPNG(
 
   if (transparentRouteOnly) {
     clonedSvg.querySelector('#ocean-background')?.remove();
-    clonedSvg.querySelector('#basemap-layer')?.remove();
+    clonedSvg.querySelector('#polar-countries')?.remove();
   } else {
-    // Inlining blob URLs if any image exists
-    const imgEl = clonedSvg.querySelector('#basemap-layer image') as SVGImageElement | null;
-    if (imgEl) {
+    // Inlining blob URLs if any image exists (ImageMap mode)
+    const imgEls = clonedSvg.querySelectorAll('image');
+    for (const imgEl of Array.from(imgEls)) {
       const href = imgEl.getAttribute('href') || imgEl.getAttribute('xlink:href');
       if (href && href.startsWith('blob:')) {
         try {
@@ -93,10 +98,28 @@ export async function exportMapAsPNG(
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
+        // 1. If MapLibre WebGL canvas exists and not transparent overlay, composite basemap canvas first
+        if (mapLibreCanvas && !transparentRouteOnly) {
+          try {
+            ctx.drawImage(mapLibreCanvas, 0, 0, targetWidth, targetHeight);
+          } catch (e) {
+            console.warn('Could not draw MapLibre canvas to export context', e);
+          }
+        }
+
+        // 2. Draw SVG Travel Overlay (Route, Marker, Label)
         ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
         URL.revokeObjectURL(url);
 
-        canvas.toBlob(pngBlob => {
+        // 3. Attribution overlay for MapLibre
+        if (mapLibreCanvas && !transparentRouteOnly) {
+          ctx.font = '11px sans-serif';
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.textAlign = 'right';
+          ctx.fillText('© OpenStreetMap contributors | OpenFreeMap', targetWidth - 12, targetHeight - 10);
+        }
+
+        canvas.toBlob((pngBlob) => {
           if (!pngBlob) {
             reject(new Error('Failed to generate PNG blob'));
             return;
@@ -117,7 +140,7 @@ export async function exportMapAsPNG(
       }
     };
 
-    img.onerror = err => {
+    img.onerror = (err) => {
       URL.revokeObjectURL(url);
       reject(err);
     };

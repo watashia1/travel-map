@@ -28,7 +28,7 @@ export const ProjectPanel: React.FC<ProjectPanelProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `travel-map-v2-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `travel-map-v3-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };

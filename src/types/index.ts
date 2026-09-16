@@ -18,6 +18,8 @@ export interface Place {
   source: 'coordinates' | 'local-place-db' | 'manual';
   order: number;
   status: 'resolved' | 'ambiguous' | 'unresolved';
+  geoStatus?: 'resolved' | 'ambiguous' | 'unresolved';
+  visualStatus?: 'placed' | 'unplaced';
   ambiguousCandidates?: PlaceRecord[];
   
   // Marker visual offset in map-space coordinates (resolves zoom drift)
@@ -90,6 +92,24 @@ export type MapRegionType =
   | 'oceania'
   | 'antarctica';
 
+export type MapLibreStyleId = 'travel-clean' | 'liberty' | 'positron';
+
+export interface MapLibreBasemap {
+  type: 'builtin-maplibre';
+  styleId: MapLibreStyleId;
+  enableCountryFill?: boolean;
+  showAdmin1?: boolean;
+}
+
+export interface PolarBasemap {
+  type: 'polar';
+  pole: 'north' | 'south';
+  projection?: 'azimuthalEquidistant' | 'stereographic';
+  landColor?: string;
+  borderColor?: string;
+  oceanColor?: string;
+}
+
 export interface BuiltinBasemap {
   type: 'builtin';
   mapId: string;
@@ -151,6 +171,8 @@ export interface CalibratedImageBasemap {
 }
 
 export type BasemapConfig =
+  | MapLibreBasemap
+  | PolarBasemap
   | BuiltinBasemap
   | FreeImageBasemap
   | EquirectangularImageBasemap
@@ -163,14 +185,34 @@ export interface CameraState {
   autoFit?: boolean;
 }
 
+export interface MapLibreViewState {
+  center: [number, number];
+  zoom: number;
+  bearing: number;
+  pitch: number;
+}
+
+export interface ImageViewState {
+  zoom: number;
+  panX: number;
+  panY: number;
+}
+
+export interface ProjectViews {
+  builtin?: MapLibreViewState;
+  polar?: CameraState;
+  image?: ImageViewState;
+}
+
 export type OverlayScaleMode = 'screen-fixed';
 
 export interface ProjectData {
-  version: '2.0';
+  version: '3.0' | '2.0';
   title: string;
   places: Place[];
   basemap: BasemapConfig;
-  camera: CameraState;
+  camera?: CameraState; // legacy backward compatibility
+  views?: ProjectViews;
   routeStyle: RouteStyle;
   markerStyle: MarkerStyle;
   labelStyle: LabelStyle;
