@@ -10,6 +10,7 @@ import {
   CameraState,
 } from '../types';
 import { MapLibreGlobalView } from '../maplibre/MapLibreGlobalView';
+import { DEFAULT_MAPLIBRE_STYLE_ID } from '../maplibre/styleCatalog';
 import { PolarMapView } from '../polar/PolarMapView';
 import { ImageMapView } from '../image-map/ImageMapView';
 
@@ -105,7 +106,7 @@ export const MapViewport: React.FC<MapViewportProps> = ({
         places={places}
         basemap={{
           type: 'builtin-maplibre',
-          styleId: 'travel-clean',
+          styleId: DEFAULT_MAPLIBRE_STYLE_ID,
           enableCountryFill: builtinOld.enableColorByCountry ?? true,
           showAdmin1: builtinOld.showAdmin1 ?? true,
         }}

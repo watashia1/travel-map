@@ -4,10 +4,14 @@ import { migrateProjectV2ToV3 } from '../types/migration';
 import { REGION_CAMERA_PRESETS } from '../maplibre/regionPresets';
 import { createCartoTravelCleanStyle, createNaturalEarthStyle } from '../maplibre/createTravelStyle';
 import { Place } from '../types';
+import {
+  DEFAULT_MAPLIBRE_STYLE_ID,
+  MAPLIBRE_STYLE_OPTIONS,
+} from '../maplibre/styleCatalog';
 
 describe('travel-map V3 Architecture & Migration', () => {
   describe('ProjectData V2 to V3 Migration', () => {
-    it('migrates V2 builtin world map to V3 builtin-maplibre with travel-clean style', () => {
+    it('migrates V2 builtin world map to V3 builtin-maplibre with the default style', () => {
       const v2Project = {
         version: '2.0',
         title: '我的旧世界旅行',
@@ -43,7 +47,7 @@ describe('travel-map V3 Architecture & Migration', () => {
       expect(v3.version).toBe('3.0');
       expect(v3.basemap.type).toBe('builtin-maplibre');
       if (v3.basemap.type === 'builtin-maplibre') {
-        expect(v3.basemap.styleId).toBe('travel-clean');
+        expect(v3.basemap.styleId).toBe('liberty');
         expect(v3.basemap.enableCountryFill).toBe(true);
         expect(v3.basemap.showAdmin1).toBe(true);
       }
@@ -126,6 +130,12 @@ describe('travel-map V3 Architecture & Migration', () => {
   });
 
   describe('Map Styles Specification', () => {
+    it('uses OpenFreeMap Liberty by default and lists Travel Clean last', () => {
+      expect(DEFAULT_MAPLIBRE_STYLE_ID).toBe('liberty');
+      expect(MAPLIBRE_STYLE_OPTIONS[0].id).toBe('liberty');
+      expect(MAPLIBRE_STYLE_OPTIONS.at(-1)?.id).toBe('travel-clean');
+    });
+
     it('creates valid Travel Clean style with Carto raster source and layers', async () => {
       const style = await createCartoTravelCleanStyle();
       expect(style.version).toBe(8);

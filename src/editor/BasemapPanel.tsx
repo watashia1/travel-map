@@ -11,6 +11,10 @@ import {
 import { deleteImageBlob, saveImageBlob, getImageObjectUrl } from '../map/storage/imageStore';
 import { fitAffineTransform, checkControlPointsQuality } from '../map/transformer';
 import {
+  DEFAULT_MAPLIBRE_STYLE_ID,
+  MAPLIBRE_STYLE_OPTIONS,
+} from '../maplibre/styleCatalog';
+import {
   Upload,
   Image as ImageIcon,
   Globe,
@@ -101,7 +105,7 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
     e.target.value = '';
   };
 
-  const handleSwitchToMapLibre = (styleId: MapLibreStyleId = 'travel-clean') => {
+  const handleSwitchToMapLibre = (styleId: MapLibreStyleId = DEFAULT_MAPLIBRE_STYLE_ID) => {
     onChangeBasemap({
       type: 'builtin-maplibre',
       styleId,
@@ -252,19 +256,15 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
 
             <div>
               <label className="block text-slate-500 mb-1.5 font-medium">底图视觉风格与源</label>
-              <div className="grid grid-cols-2 gap-1.5">
-                {[
-                  { id: 'travel-clean', label: '旅行极简 (高速 CDN)' },
-                  { id: 'natural-earth', label: '离线内置矢量 (免外网)' },
-                  { id: 'liberty', label: 'OpenFreeMap 彩色' },
-                  { id: 'positron', label: 'OpenFreeMap 白底' },
-                  { id: 'osm-standard', label: '标准 OpenStreetMap' },
-                ].map((s) => {
-                  const currentStyleId = (basemap as MapLibreBasemap).styleId || 'travel-clean';
+              <div className="grid grid-cols-2 gap-1.5" data-testid="maplibre-style-options">
+                {MAPLIBRE_STYLE_OPTIONS.map((s) => {
+                  const currentStyleId =
+                    (basemap as MapLibreBasemap).styleId || DEFAULT_MAPLIBRE_STYLE_ID;
                   const isSelected = currentStyleId === s.id;
                   return (
                     <button
                       key={s.id}
+                      data-style-id={s.id}
                       onClick={() =>
                         onChangeBasemap({
                           ...basemap,
@@ -300,7 +300,8 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
                   onChangeBasemap({
                     ...basemap,
                     type: 'builtin-maplibre',
-                    styleId: (basemap as MapLibreBasemap).styleId || 'travel-clean',
+                    styleId:
+                      (basemap as MapLibreBasemap).styleId || DEFAULT_MAPLIBRE_STYLE_ID,
                     enableCountryFill: e.target.checked,
                   })
                 }
@@ -321,7 +322,8 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
                   onChangeBasemap({
                     ...basemap,
                     type: 'builtin-maplibre',
-                    styleId: (basemap as MapLibreBasemap).styleId || 'travel-clean',
+                    styleId:
+                      (basemap as MapLibreBasemap).styleId || DEFAULT_MAPLIBRE_STYLE_ID,
                     showAdmin1: e.target.checked,
                   })
                 }

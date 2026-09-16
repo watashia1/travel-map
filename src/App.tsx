@@ -28,6 +28,7 @@ import { parseInputText, loadPlacesDatabase } from './parser/placeSearch';
 import { getImageObjectUrl } from './map/storage/imageStore';
 import { checkControlPointsQuality, fitAffineTransform } from './map/transformer';
 import { OFFICIAL_BASEMAP_REGISTRY } from './map/basemaps/registry';
+import { DEFAULT_MAPLIBRE_STYLE_ID } from './maplibre/styleCatalog';
 import {
   MapPin,
   Map as MapIcon,
@@ -42,6 +43,7 @@ import {
 const STORAGE_KEY_V3 = 'travel_map_project_v3';
 const STORAGE_KEY_V2 = 'travel_map_project_v2';
 const INIT_FLAG_KEY = 'travel_map_has_initialized_v3';
+const LIBERTY_DEFAULT_MIGRATION_KEY = 'travel_map_default_basemap_liberty_v1';
 
 const defaultRouteStyle: RouteStyle = {
   type: 'curved',
@@ -71,7 +73,7 @@ const defaultLabelStyle: LabelStyle = {
 
 const defaultBasemap: BasemapConfig = {
   type: 'builtin-maplibre',
-  styleId: 'travel-clean',
+  styleId: DEFAULT_MAPLIBRE_STYLE_ID,
   enableCountryFill: true,
   showAdmin1: true,
 };
@@ -102,6 +104,20 @@ const initialProject: ProjectData = {
   overlayScaleMode: 'screen-fixed',
 };
 
+const replacePreviousDefaultBasemap = (project: ProjectData): ProjectData => {
+  if (project.basemap.type !== 'builtin-maplibre' || project.basemap.styleId !== 'travel-clean') {
+    return project;
+  }
+
+  return {
+    ...project,
+    basemap: {
+      ...project.basemap,
+      styleId: DEFAULT_MAPLIBRE_STYLE_ID,
+    },
+  };
+};
+
 export const App: React.FC = () => {
   const {
     state: project,
@@ -114,13 +130,19 @@ export const App: React.FC = () => {
     canUndo,
     canRedo,
   } = useHistory<ProjectData>(() => {
+    const shouldMigratePreviousDefault =
+      localStorage.getItem(LIBERTY_DEFAULT_MIGRATION_KEY) !== 'true';
+
     try {
       // 1. Try V3 storage first
       const savedV3 = localStorage.getItem(STORAGE_KEY_V3);
       if (savedV3) {
         const parsed = JSON.parse(savedV3);
         if (parsed && Array.isArray(parsed.places)) {
-          return migrateProjectV2ToV3(parsed);
+          const migrated = migrateProjectV2ToV3(parsed);
+          return shouldMigratePreviousDefault
+            ? replacePreviousDefaultBasemap(migrated)
+            : migrated;
         }
       }
 
@@ -129,7 +151,10 @@ export const App: React.FC = () => {
       if (savedV2) {
         const parsed = JSON.parse(savedV2);
         if (parsed && Array.isArray(parsed.places)) {
-          return migrateProjectV2ToV3(parsed);
+          const migrated = migrateProjectV2ToV3(parsed);
+          return shouldMigratePreviousDefault
+            ? replacePreviousDefaultBasemap(migrated)
+            : migrated;
         }
       }
     } catch (e) {
@@ -148,6 +173,10 @@ export const App: React.FC = () => {
   } | null>(null);
   const [pickingPlaceId, setPickingPlaceId] = useState<string | null>(null);
   const [imageFitRequestId, setImageFitRequestId] = useState(0);
+
+  useEffect(() => {
+    localStorage.setItem(LIBERTY_DEFAULT_MIGRATION_KEY, 'true');
+  }, []);
 
   // Preload places database on startup
   useEffect(() => {
@@ -476,7 +505,7 @@ export const App: React.FC = () => {
       presetText = `悉尼\n奥克兰\n楠迪\n努库阿洛法`;
       newBasemap = {
         type: 'builtin-maplibre',
-        styleId: 'travel-clean',
+        styleId: DEFAULT_MAPLIBRE_STYLE_ID,
         enableCountryFill: true,
         showAdmin1: true,
       };
@@ -494,7 +523,7 @@ export const App: React.FC = () => {
       presetText = `东京\n安克雷奇`;
       newBasemap = {
         type: 'builtin-maplibre',
-        styleId: 'travel-clean',
+        styleId: DEFAULT_MAPLIBRE_STYLE_ID,
         enableCountryFill: true,
         showAdmin1: true,
       };
@@ -502,7 +531,7 @@ export const App: React.FC = () => {
       presetText = `东京\n43.0618, 141.3545 | 札幌\n奥斯陆\n64.1466, -21.9426 | 雷克雅未克\n78.2232, 15.6469 | 朗伊尔城`;
       newBasemap = {
         type: 'builtin-maplibre',
-        styleId: 'travel-clean',
+        styleId: DEFAULT_MAPLIBRE_STYLE_ID,
         enableCountryFill: true,
         showAdmin1: true,
       };
@@ -510,7 +539,7 @@ export const App: React.FC = () => {
       presetText = `西安\n敦煌\n喀什\n撒马尔罕\n伊斯坦布尔\n罗马`;
       newBasemap = {
         type: 'builtin-maplibre',
-        styleId: 'travel-clean',
+        styleId: DEFAULT_MAPLIBRE_STYLE_ID,
         enableCountryFill: true,
         showAdmin1: true,
       };

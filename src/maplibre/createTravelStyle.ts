@@ -315,8 +315,11 @@ export async function createTravelStyle(options: {
 
     return style;
   } catch (err) {
-    console.warn(`OpenFreeMap (${styleId}) failed or timed out, falling back to Travel Clean Carto:`, err);
-    return createCartoTravelCleanStyle({ enableCountryFill });
+    console.warn(
+      `OpenFreeMap (${styleId}) failed or timed out, falling back to local Natural Earth:`,
+      err
+    );
+    return createNaturalEarthStyle({ showAdmin1 });
   }
 }
 

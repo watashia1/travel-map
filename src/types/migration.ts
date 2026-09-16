@@ -1,5 +1,7 @@
 ﻿import { ProjectData, BasemapConfig, Place } from './index';
 
+import { DEFAULT_MAPLIBRE_STYLE_ID } from '../maplibre/styleCatalog';
+
 export function migrateProjectV2ToV3(raw: any): ProjectData {
   if (!raw || typeof raw !== 'object') {
     throw new Error('Invalid project data format');
@@ -25,7 +27,7 @@ export function migrateProjectV2ToV3(raw: any): ProjectData {
     } else {
       basemap = {
         type: 'builtin-maplibre',
-        styleId: 'travel-clean',
+        styleId: DEFAULT_MAPLIBRE_STYLE_ID,
         enableCountryFill: builtinOld.enableColorByCountry ?? true,
         showAdmin1: builtinOld.showAdmin1 ?? true
       };
@@ -33,7 +35,7 @@ export function migrateProjectV2ToV3(raw: any): ProjectData {
   } else if (!basemap) {
     basemap = {
       type: 'builtin-maplibre',
-      styleId: 'travel-clean',
+      styleId: DEFAULT_MAPLIBRE_STYLE_ID,
       enableCountryFill: true,
       showAdmin1: true
     };
