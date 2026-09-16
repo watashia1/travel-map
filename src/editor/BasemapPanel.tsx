@@ -8,7 +8,7 @@ import {
   CalibrationTransform,
   MapLibreStyleId,
 } from '../types';
-import { saveImageBlob, getImageObjectUrl } from '../map/storage/imageStore';
+import { deleteImageBlob, saveImageBlob, getImageObjectUrl } from '../map/storage/imageStore';
 import { fitAffineTransform, checkControlPointsQuality } from '../map/transformer';
 import {
   Upload,
@@ -31,7 +31,7 @@ interface BasemapPanelProps {
   pickingPlaceId: string | null;
   onSelectPickingPlace: (placeId: string | null) => void;
   onChangeBasemap: (newBasemap: BasemapConfig) => void;
-  onFitImage?: (w?: number, h?: number) => void;
+  onFitImage?: () => void;
 }
 
 export const BasemapPanel: React.FC<BasemapPanelProps> = ({
@@ -44,6 +44,7 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [aspectRatioWarning, setAspectRatioWarning] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const isBuiltinMapLibre = basemap.type === 'builtin-maplibre' || basemap.type === 'builtin';
   const isPolar = basemap.type === 'polar';
@@ -58,8 +59,10 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
     if (!file) return;
 
     try {
+      setUploadError(null);
       const assetId = await saveImageBlob(file, file.name);
       const url = await getImageObjectUrl(assetId);
+      if (!url) throw new Error('图片资源保存后无法读取');
 
       const img = new Image();
       img.onload = () => {
@@ -67,37 +70,33 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
         const h = img.naturalHeight || 800;
         const ratio = w / h;
 
-        const isEquirect = Math.abs(ratio - 2.0) <= 0.3;
-        if (isEquirect) {
-          setAspectRatioWarning(null);
-          onChangeBasemap({
-            type: 'equirectangular-image',
-            assetId,
-            imageName: file.name,
-            imageWidth: w,
-            imageHeight: h,
-            imageUrl: url || undefined,
-          });
-        } else {
-          setAspectRatioWarning(
-            `当前上传图片比例约为 ${ratio.toFixed(2)}:1，推荐设为“多点仿射校准”或“自由底图”。`
-          );
-          onChangeBasemap({
-            type: 'calibrated-image',
-            assetId,
-            imageName: file.name,
-            imageWidth: w,
-            imageHeight: h,
-            imageUrl: url || undefined,
-            controlPoints: [],
-          });
-        }
+        setAspectRatioWarning(
+          Math.abs(ratio - 2.0) <= 0.3
+            ? '这张图片比例接近 2:1。如果它确实是完整的等距圆柱世界地图，可手动选择“标准经纬世界图”。'
+            : null
+        );
 
-        onFitImage?.(w, h);
+        // Every arbitrary image is safe in free-image mode. Geographic modes
+        // require an explicit user choice and must never be inferred by ratio.
+        onChangeBasemap({
+          type: 'free-image',
+          assetId,
+          imageName: file.name,
+          imageWidth: w,
+          imageHeight: h,
+          imageUrl: url,
+        });
+        onFitImage?.();
       };
-      if (url) img.src = url;
+      img.onerror = () => {
+        setUploadError('无法读取该图片。请尝试 PNG、JPEG、WebP，或检查 SVG 是否有效。');
+        void deleteImageBlob(assetId).catch((error) => {
+          console.warn('Failed to clean up unreadable image asset', error);
+        });
+      };
+      img.src = url;
     } catch (err) {
-      alert('上传底图失败：' + String(err));
+      setUploadError('上传底图失败：' + String(err));
     }
     e.target.value = '';
   };
@@ -130,6 +129,11 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
     const points = basemap.controlPoints || [];
     if (points.length < 3) {
       alert('至少需要 3 个控制点才能计算仿射变换。');
+      return;
+    }
+    const quality = checkControlPointsQuality(points);
+    if (!quality.isValid) {
+      alert(quality.warning || '控制点分布无效，请重新选择。');
       return;
     }
     const fit = fitAffineTransform(points);
@@ -394,7 +398,7 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
             </div>
             <div className="flex items-center space-x-1.5">
               <button
-                onClick={() => onFitImage?.((basemap as any).imageWidth, (basemap as any).imageHeight)}
+                onClick={() => onFitImage?.()}
                 className="px-2.5 py-1 bg-white border border-purple-200 text-purple-700 rounded-md text-xs hover:bg-purple-50 flex items-center space-x-1"
                 title="缩放视口以完整展示整张底图"
               >
@@ -409,6 +413,20 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
               </button>
             </div>
           </div>
+
+          {aspectRatioWarning && (
+            <div className="flex items-start space-x-1.5 rounded-lg border border-blue-200 bg-blue-50 p-2.5 text-[10px] leading-relaxed text-blue-800">
+              <AlertCircle size={14} className="mt-0.5 shrink-0 text-blue-600" />
+              <span>{aspectRatioWarning}</span>
+            </div>
+          )}
+
+          {uploadError && (
+            <div role="alert" className="flex items-start space-x-1.5 rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-[10px] leading-relaxed text-rose-800">
+              <AlertTriangle size={14} className="mt-0.5 shrink-0 text-rose-600" />
+              <span>{uploadError}</span>
+            </div>
+          )}
 
           {/* Mode Sub-Selector */}
           <div>
@@ -604,6 +622,10 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
                       (cp) => cp.placeId === p.id
                     );
                     const isPicking = pickingPlaceId === p.id;
+                    const hasResolvedCoordinates =
+                      (p.status === 'resolved' || p.geoStatus === 'resolved') &&
+                      Number.isFinite(p.lat) &&
+                      Number.isFinite(p.lon);
 
                     return (
                       <div
@@ -613,13 +635,20 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
                         <div className="truncate mr-2">
                           <span className="font-medium text-slate-800">{p.displayName}</span>
                           <span className="text-[9px] text-slate-400 block font-mono">
-                            {p.lat.toFixed(2)}°, {p.lon.toFixed(2)}°
+                            {hasResolvedCoordinates
+                              ? `${p.lat.toFixed(2)}°, ${p.lon.toFixed(2)}°`
+                              : '经纬度未解析'}
                           </span>
                         </div>
                         <button
-                          onClick={() => onSelectPickingPlace(isPicking ? null : p.id)}
+                          disabled={!hasResolvedCoordinates}
+                          onClick={() =>
+                            hasResolvedCoordinates && onSelectPickingPlace(isPicking ? null : p.id)
+                          }
                           className={`px-2 py-1 rounded text-[10px] font-medium flex items-center transition ${
-                            isPicking
+                            !hasResolvedCoordinates
+                              ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
+                              : isPicking
                               ? 'bg-amber-500 text-white animate-pulse'
                               : isCalibrated
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -627,7 +656,13 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
                           }`}
                         >
                           <Crosshair size={11} className="mr-1" />
-                          {isPicking ? '请点击地图...' : isCalibrated ? '重新标定' : '标定该点'}
+                          {!hasResolvedCoordinates
+                            ? '先设置经纬度'
+                            : isPicking
+                            ? '请点击地图...'
+                            : isCalibrated
+                            ? '重新标定'
+                            : '标定该点'}
                         </button>
                       </div>
                     );
@@ -650,7 +685,7 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
                 </button>
                 <button
                   onClick={() =>
-                    onFitImage?.((basemap as any).imageWidth, (basemap as any).imageHeight)
+                    onFitImage?.()
                   }
                   className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-md text-xs font-medium flex items-center space-x-1 transition"
                 >

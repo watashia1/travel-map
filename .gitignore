@@ -9,3 +9,5 @@ dist-ssr
 *.log
 *.crdownload
 *.zip
+playwright-report
+test-results

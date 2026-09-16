@@ -5,6 +5,8 @@ import {
   checkControlPointsQuality,
   CalibratedImageTransformer,
   FreeImageTransformer,
+  PendingCalibrationTransformer,
+  createImageCoordinateTransformer,
   D3ProjectionTransformer,
   getPlaceMapAnchor
 } from '../map/transformer';
@@ -154,6 +156,61 @@ describe('2. Multi-point Affine Calibration Quality Check (Custom Image Fixture)
     expect(inverted).not.toBeNull();
     expect(inverted![0]).toBeCloseTo(-90.28, 2);
     expect(inverted![1]).toBeCloseTo(-0.45, 2);
+  });
+});
+
+describe('2B. Custom Image Transformer State Safety', () => {
+  const resolvedPlace: Place = {
+    id: 'tokyo',
+    name: 'Tokyo',
+    displayName: '东京',
+    lat: 35.68,
+    lon: 139.76,
+    order: 0,
+    source: 'coordinates',
+    rawInput: '东京',
+    status: 'resolved',
+  };
+
+  it('uses a safe pending transformer for calibrated images with 0-2 control points', () => {
+    for (const count of [0, 1, 2]) {
+      const transformer = createImageCoordinateTransformer(
+        {
+          type: 'calibrated-image',
+          assetId: 'pending-map',
+          imageWidth: 2160,
+          imageHeight: 2160,
+          controlPoints: Array.from({ length: count }, (_, index) => ({
+            placeId: `p${index}`,
+            name: `P${index}`,
+            lat: index,
+            lon: index,
+            imageX: index * 100,
+            imageY: index * 100,
+          })),
+        },
+        1280,
+        800
+      );
+
+      expect(transformer).toBeInstanceOf(PendingCalibrationTransformer);
+      expect(transformer.project(resolvedPlace.lon, resolvedPlace.lat, resolvedPlace)).toBeNull();
+    }
+  });
+
+  it('does not place an unpositioned free-image place at the image center', () => {
+    const transformer = new FreeImageTransformer(2160, 2160);
+    expect(transformer.project(resolvedPlace.lon, resolvedPlace.lat, resolvedPlace)).toBeNull();
+  });
+
+  it('projects a positioned free-image place using normalized image coordinates', () => {
+    const transformer = new FreeImageTransformer(2000, 1000);
+    const projected = transformer.project(0, 0, {
+      ...resolvedPlace,
+      visualPosition: { x: 0.25, y: 0.75 },
+      visualStatus: 'placed',
+    });
+    expect(projected).toEqual([500, 750]);
   });
 });
 

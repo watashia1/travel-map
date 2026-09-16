@@ -1,5 +1,18 @@
 import * as d3 from 'd3-geo';
-import { Place, BasemapConfig, CalibrationPoint, CalibrationTransform } from '../types';
+import {
+  Place,
+  BasemapConfig,
+  CalibrationPoint,
+  CalibrationTransform,
+  FreeImageBasemap,
+  EquirectangularImageBasemap,
+  CalibratedImageBasemap,
+} from '../types';
+
+export type ImageBasemapConfig =
+  | FreeImageBasemap
+  | EquirectangularImageBasemap
+  | CalibratedImageBasemap;
 
 export interface CoordinateTransformer {
   type: string;
@@ -255,6 +268,22 @@ export class CalibratedImageTransformer implements CoordinateTransformer {
 }
 
 /**
+ * Safe transformer for an uploaded image that is still waiting for enough
+ * calibration points. This is an expected editing state, not an error.
+ */
+export class PendingCalibrationTransformer implements CoordinateTransformer {
+  type = 'calibrated-image-pending';
+
+  project(): [number, number] | null {
+    return null;
+  }
+
+  invert(): [number, number] | null {
+    return null;
+  }
+}
+
+/**
  * Transformer for Free Image Basemap
  * Directly uses place.visualPosition (0~1 normalized coordinate)
  */
@@ -263,17 +292,40 @@ export class FreeImageTransformer implements CoordinateTransformer {
   constructor(private imageWidth: number, private imageHeight: number) {}
 
   project(_lon: number, _lat: number, place?: Place): [number, number] | null {
-    if (place?.visualPosition) {
-      return [
-        place.visualPosition.x * this.imageWidth,
-        place.visualPosition.y * this.imageHeight
-      ];
-    }
-    return [this.imageWidth / 2, this.imageHeight / 2];
+    if (!place?.visualPosition) return null;
+
+    return [
+      place.visualPosition.x * this.imageWidth,
+      place.visualPosition.y * this.imageHeight
+    ];
   }
 
   invert(screenX: number, screenY: number): [number, number] | null {
     return [screenX / this.imageWidth, screenY / this.imageHeight];
+  }
+}
+
+/**
+ * Image-only transformer factory. Keeping this separate from D3 projections
+ * prevents image editing states from falling through to a null projection.
+ */
+export function createImageCoordinateTransformer(
+  basemap: ImageBasemapConfig,
+  canvasWidth: number,
+  canvasHeight: number
+): CoordinateTransformer {
+  const width = basemap.imageWidth || canvasWidth;
+  const height = basemap.imageHeight || canvasHeight;
+
+  switch (basemap.type) {
+    case 'free-image':
+      return new FreeImageTransformer(width, height);
+    case 'equirectangular-image':
+      return new EquirectangularImageTransformer(width, height);
+    case 'calibrated-image':
+      return basemap.transform
+        ? new CalibratedImageTransformer(basemap.transform)
+        : new PendingCalibrationTransformer();
   }
 }
 
@@ -291,19 +343,15 @@ export function createCoordinateTransformer(
   }
 
   if (basemap.type === 'equirectangular-image') {
-    const w = basemap.imageWidth || canvasWidth;
-    const h = basemap.imageHeight || canvasHeight;
-    return new EquirectangularImageTransformer(w, h);
+    return createImageCoordinateTransformer(basemap, canvasWidth, canvasHeight);
   }
 
-  if (basemap.type === 'calibrated-image' && basemap.transform) {
-    return new CalibratedImageTransformer(basemap.transform);
+  if (basemap.type === 'calibrated-image') {
+    return createImageCoordinateTransformer(basemap, canvasWidth, canvasHeight);
   }
 
   if (basemap.type === 'free-image') {
-    const w = basemap.imageWidth || canvasWidth;
-    const h = basemap.imageHeight || canvasHeight;
-    return new FreeImageTransformer(w, h);
+    return createImageCoordinateTransformer(basemap, canvasWidth, canvasHeight);
   }
 
   return new D3ProjectionTransformer(d3Proj);

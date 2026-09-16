@@ -16,6 +16,7 @@ import { ImageMapView } from '../image-map/ImageMapView';
 interface MapViewportProps {
   project: ProjectData;
   pickingPlaceId?: string | null;
+  imageFitRequestId?: number;
   onPlacePicked?: (placeId: string, imgX: number, imgY: number, normX: number, normY: number) => void;
   onMapLibreViewStateChange?: (viewState: MapLibreViewState) => void;
   onImageViewStateChange?: (viewState: ImageViewState) => void;
@@ -30,6 +31,7 @@ interface MapViewportProps {
 export const MapViewport: React.FC<MapViewportProps> = ({
   project,
   pickingPlaceId,
+  imageFitRequestId,
   onPlacePicked,
   onMapLibreViewStateChange,
   onImageViewStateChange,
@@ -129,6 +131,7 @@ export const MapViewport: React.FC<MapViewportProps> = ({
       labelStyle={labelStyle}
       viewState={views?.image || { zoom: project.camera?.zoom || 1, panX: project.camera?.panX || 0, panY: project.camera?.panY || 0 }}
       pickingPlaceId={pickingPlaceId}
+      fitRequestId={imageFitRequestId}
       onPlacePicked={onPlacePicked}
       onViewStateChange={onImageViewStateChange}
       onMarkerDragMove={onMarkerDragMove}

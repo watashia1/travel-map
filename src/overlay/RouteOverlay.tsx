@@ -4,14 +4,18 @@ import { Place, RouteStyle } from '../types';
 
 interface RouteOverlayProps {
   places: Place[];
-  projectCoordinate: (lon: number, lat: number) => { x: number; y: number } | [number, number] | null;
+  projectPlace: (place: Place) => { x: number; y: number } | [number, number] | null;
+  projectGeo?: (lon: number, lat: number) => { x: number; y: number } | [number, number] | null;
+  supportsGeodesic: boolean;
   style: RouteStyle;
   canvasWidth?: number;
 }
 
 export const RouteOverlay: React.FC<RouteOverlayProps> = ({
   places,
-  projectCoordinate,
+  projectPlace,
+  projectGeo,
+  supportsGeodesic,
   style,
   canvasWidth = 1000,
 }) => {
@@ -20,7 +24,11 @@ export const RouteOverlay: React.FC<RouteOverlayProps> = ({
   let currentSegment: Place[] = [];
 
   for (const place of places) {
-    if (place.status === 'resolved') {
+    const hasGeographicPosition =
+      (place.status === 'resolved' || place.geoStatus === 'resolved') &&
+      Number.isFinite(place.lat) &&
+      Number.isFinite(place.lon);
+    if (hasGeographicPosition || place.visualStatus === 'placed' || !!place.visualPosition) {
       currentSegment.push(place);
     } else {
       if (currentSegment.length > 1) {
@@ -42,21 +50,24 @@ export const RouteOverlay: React.FC<RouteOverlayProps> = ({
   };
 
   const pathStrings: string[] = [];
+  const effectiveMode = style.mode === 'geodesic' && !supportsGeodesic
+    ? 'decorative-curve'
+    : style.mode;
 
   for (const seg of segments) {
     for (let i = 0; i < seg.length - 1; i++) {
       const p1 = seg[i];
       const p2 = seg[i + 1];
 
-      const startPt = toXY(projectCoordinate(p1.lon, p1.lat));
-      const endPt = toXY(projectCoordinate(p2.lon, p2.lat));
+      const startPt = toXY(projectPlace(p1));
+      const endPt = toXY(projectPlace(p2));
       if (!startPt || !endPt) continue;
 
-      if (style.mode === 'straight-screen') {
+      if (effectiveMode === 'straight-screen') {
         pathStrings.push(
           `M ${startPt.x.toFixed(2)} ${startPt.y.toFixed(2)} L ${endPt.x.toFixed(2)} ${endPt.y.toFixed(2)}`
         );
-      } else if (style.mode === 'decorative-curve') {
+      } else if (effectiveMode === 'decorative-curve') {
         const dx = endPt.x - startPt.x;
         const dy = endPt.y - startPt.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -72,6 +83,7 @@ export const RouteOverlay: React.FC<RouteOverlayProps> = ({
         );
       } else {
         // 'geodesic' spherical great-circle interpolation
+        if (!projectGeo) continue;
         const interpolator = d3.geoInterpolate([p1.lon, p1.lat], [p2.lon, p2.lat]);
         const numSteps = 32;
         const pts: { x: number; y: number }[] = [];
@@ -79,7 +91,7 @@ export const RouteOverlay: React.FC<RouteOverlayProps> = ({
         for (let s = 0; s <= numSteps; s++) {
           const t = s / numSteps;
           const [lon, lat] = interpolator(t);
-          const proj = toXY(projectCoordinate(lon, lat));
+          const proj = toXY(projectGeo(lon, lat));
           if (proj) {
             pts.push(proj);
           }

@@ -251,7 +251,9 @@ export const PolarMapView: React.FC<PolarMapViewProps> = ({
         {/* SVG Route Overlay */}
         <RouteOverlay
           places={places}
-          projectCoordinate={projectCoordinate}
+          projectPlace={(place) => projectCoordinate(place.lon, place.lat)}
+          projectGeo={projectCoordinate}
+          supportsGeodesic={true}
           style={routeStyle}
           canvasWidth={dimensions.width}
         />

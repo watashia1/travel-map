@@ -44,7 +44,13 @@ export const LabelOverlay: React.FC<LabelOverlayProps> = ({
   } | null>(null);
 
   const validPlaces = projectedPlaces.filter(
-    (item) => item.place.status === 'resolved' && !item.place.hideLabel && item.visible !== false
+    (item) =>
+      (item.place.status === 'resolved' ||
+        item.place.geoStatus === 'resolved' ||
+        item.place.visualStatus === 'placed' ||
+        !!item.place.visualPosition) &&
+      !item.place.hideLabel &&
+      item.visible !== false
   );
 
   // Compute 8-direction auto-avoidance offsets if enabled

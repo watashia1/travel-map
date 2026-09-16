@@ -20,13 +20,13 @@ import { BasemapPanel } from './editor/BasemapPanel';
 import { StylePanel } from './editor/StylePanel';
 import { ProjectPanel } from './editor/ProjectPanel';
 import { MapViewport } from './map/MapViewport';
+import { MapRendererErrorBoundary } from './map/MapRendererErrorBoundary';
 import { ExportModal } from './export/ExportModal';
 import { ConfirmModal } from './editor/ConfirmModal';
 import { AmbiguityModal } from './editor/AmbiguityModal';
 import { parseInputText, loadPlacesDatabase } from './parser/placeSearch';
 import { getImageObjectUrl } from './map/storage/imageStore';
-import { calculateFitToImage } from './map/projections';
-import { fitAffineTransform } from './map/transformer';
+import { checkControlPointsQuality, fitAffineTransform } from './map/transformer';
 import { OFFICIAL_BASEMAP_REGISTRY } from './map/basemaps/registry';
 import {
   MapPin,
@@ -147,6 +147,7 @@ export const App: React.FC = () => {
     candidates: PlaceRecord[];
   } | null>(null);
   const [pickingPlaceId, setPickingPlaceId] = useState<string | null>(null);
+  const [imageFitRequestId, setImageFitRequestId] = useState(0);
 
   // Preload places database on startup
   useEffect(() => {
@@ -348,20 +349,10 @@ export const App: React.FC = () => {
     [setTransient]
   );
 
-  // Fit view to entire image
-  const handleFitToImage = useCallback(
-    (w?: number, h?: number) => {
-      const imgW = w || (project.basemap as any).imageWidth || 1200;
-      const imgH = h || (project.basemap as any).imageHeight || 800;
-      const fit = calculateFitToImage(imgW, imgH, imgW, imgH);
-      handleImageViewStateChange({
-        zoom: fit.zoom,
-        panX: fit.panX,
-        panY: fit.panY,
-      });
-    },
-    [project.basemap, handleImageViewStateChange]
-  );
+  // ImageMapView owns fit math because it knows the real measured viewport.
+  const handleFitToImage = useCallback(() => {
+    setImageFitRequestId((current) => current + 1);
+  }, []);
 
   // Point picking for custom basemaps (both free-image & calibrated-image)
   const handlePlacePicked = (
@@ -374,6 +365,15 @@ export const App: React.FC = () => {
     if (project.basemap.type === 'calibrated-image') {
       const place = project.places.find((p) => p.id === placeId);
       if (!place) return;
+      const hasResolvedCoordinates =
+        (place.status === 'resolved' || place.geoStatus === 'resolved') &&
+        Number.isFinite(place.lat) &&
+        Number.isFinite(place.lon);
+      if (!hasResolvedCoordinates) {
+        alert('该地点尚未解析经纬度，请先设置有效经纬度再用于地图校准。');
+        setPickingPlaceId(null);
+        return;
+      }
 
       const currentPoints = project.basemap.controlPoints || [];
       const filtered = currentPoints.filter((cp) => cp.placeId !== placeId);
@@ -387,14 +387,17 @@ export const App: React.FC = () => {
       };
       const updatedPoints = [...filtered, newPoint];
 
-      let newTransform = project.basemap.transform;
-      let newError = project.basemap.errorPx;
+      let newTransform: CalibratedImageBasemap['transform'];
+      let newError: number | undefined;
 
       if (updatedPoints.length >= 3) {
-        const fit = fitAffineTransform(updatedPoints);
-        if (fit) {
-          newTransform = fit.transform;
-          newError = fit.errorPx;
+        const quality = checkControlPointsQuality(updatedPoints);
+        if (quality.isValid) {
+          const fit = fitAffineTransform(updatedPoints);
+          if (fit) {
+            newTransform = fit.transform;
+            newError = fit.errorPx;
+          }
         }
       }
 
@@ -406,9 +409,6 @@ export const App: React.FC = () => {
           transform: newTransform,
           errorPx: newError,
         } as CalibratedImageBasemap,
-        places: prev.places.map((p) =>
-          p.id === placeId ? { ...p, status: 'resolved', visualStatus: 'placed' } : p
-        ),
       }));
       setPickingPlaceId(null);
       return;
@@ -540,6 +540,18 @@ export const App: React.FC = () => {
     }));
     setIsConfirmResetOpen(false);
   };
+
+  const handleResetRendererToBuiltin = useCallback(() => {
+    setPickingPlaceId(null);
+    setProject((prev) => ({
+      ...prev,
+      basemap: { ...defaultBasemap },
+      views: {
+        ...prev.views,
+        builtin: prev.views?.builtin || initialProject.views?.builtin,
+      },
+    }));
+  }, [setProject]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-100 font-sans">
@@ -723,19 +735,26 @@ export const App: React.FC = () => {
 
         {/* Right Map Canvas (Routed through MapViewport) */}
         <main className="flex-1 h-full overflow-hidden relative">
-          <MapViewport
-            project={project}
-            pickingPlaceId={pickingPlaceId}
-            onPlacePicked={handlePlacePicked}
-            onMapLibreViewStateChange={handleMapLibreViewStateChange}
-            onImageViewStateChange={handleImageViewStateChange}
-            onPolarCameraChange={handlePolarCameraChange}
-            onMarkerDragMove={handleMarkerDragMove}
-            onMarkerDragEnd={handleMarkerDragEnd}
-            onLabelDragStart={handleDragStart}
-            onLabelDragMove={handleLabelDragMove}
-            onLabelDragEnd={handleLabelDragEnd}
-          />
+          <MapRendererErrorBoundary
+            basemapType={project.basemap.type}
+            resetKey={`${project.basemap.type}:${'assetId' in project.basemap ? project.basemap.assetId : ''}`}
+            onResetToBuiltinMap={handleResetRendererToBuiltin}
+          >
+            <MapViewport
+              project={project}
+              pickingPlaceId={pickingPlaceId}
+              imageFitRequestId={imageFitRequestId}
+              onPlacePicked={handlePlacePicked}
+              onMapLibreViewStateChange={handleMapLibreViewStateChange}
+              onImageViewStateChange={handleImageViewStateChange}
+              onPolarCameraChange={handlePolarCameraChange}
+              onMarkerDragMove={handleMarkerDragMove}
+              onMarkerDragEnd={handleMarkerDragEnd}
+              onLabelDragStart={handleDragStart}
+              onLabelDragMove={handleLabelDragMove}
+              onLabelDragEnd={handleLabelDragEnd}
+            />
+          </MapRendererErrorBoundary>
         </main>
       </div>
 

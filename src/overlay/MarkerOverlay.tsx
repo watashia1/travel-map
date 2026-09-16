@@ -30,7 +30,13 @@ export const MarkerOverlay: React.FC<MarkerOverlayProps> = ({
   } | null>(null);
 
   const validPlaces = projectedPlaces.filter(
-    (item) => item.place.status === 'resolved' && !item.place.hideMarker && item.visible !== false
+    (item) =>
+      (item.place.status === 'resolved' ||
+        item.place.geoStatus === 'resolved' ||
+        item.place.visualStatus === 'placed' ||
+        !!item.place.visualPosition) &&
+      !item.place.hideMarker &&
+      item.visible !== false
   );
 
   const handlePointerDown = (e: React.PointerEvent, place: Place) => {

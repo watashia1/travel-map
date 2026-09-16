@@ -10,7 +10,7 @@ import {
   ImageViewState,
 } from '../types';
 import {
-  createCoordinateTransformer,
+  createImageCoordinateTransformer,
   CoordinateTransformer,
 } from '../map/transformer';
 import { getPlaceImageAnchor } from './anchor';
@@ -31,6 +31,7 @@ interface ImageMapViewProps {
   labelStyle: LabelStyle;
   viewState?: ImageViewState;
   pickingPlaceId?: string | null;
+  fitRequestId?: number;
   onPlacePicked?: (placeId: string, imgX: number, imgY: number, normX: number, normY: number) => void;
   onViewStateChange?: (viewState: ImageViewState) => void;
   onMarkerDragMove?: (placeId: string, mapOffsetX: number, mapOffsetY: number) => void;
@@ -48,6 +49,7 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
   labelStyle,
   viewState = { zoom: 1, panX: 0, panY: 0 },
   pickingPlaceId,
+  fitRequestId = 0,
   onPlacePicked,
   onViewStateChange,
   onMarkerDragMove,
@@ -58,8 +60,12 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1000, height: 600 });
+  const [hasMeasuredViewport, setHasMeasuredViewport] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
+  const [pickHint, setPickHint] = useState<string | null>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const panStartRef = useRef<{ startX: number; startY: number; initialPanX: number; initialPanY: number } | null>(null);
+  const lastFitRequestRef = useRef(0);
 
   const imgW = basemap.imageWidth || dimensions.width;
   const imgH = basemap.imageHeight || dimensions.height;
@@ -72,6 +78,7 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
         const { clientWidth, clientHeight } = containerRef.current;
         if (clientWidth > 100 && clientHeight > 100) {
           setDimensions({ width: clientWidth, height: clientHeight });
+          setHasMeasuredViewport(true);
         }
       }
     };
@@ -83,8 +90,12 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
 
   // Image Transformer
   const transformer: CoordinateTransformer = useMemo(() => {
-    return createCoordinateTransformer(basemap, null as any, dimensions.width, dimensions.height);
+    return createImageCoordinateTransformer(basemap, dimensions.width, dimensions.height);
   }, [basemap, dimensions]);
+
+  useEffect(() => {
+    setImageLoadError(false);
+  }, [basemap.assetId, basemap.imageUrl]);
 
   // Project place to screen coordinate
   const projectCoordinate = useCallback(
@@ -107,7 +118,13 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
   // Projected Places for Overlay
   const projectedPlaces: ProjectedPlace[] = useMemo(() => {
     return places
-      .filter((p) => p.status === 'resolved' || p.visualStatus === 'placed')
+      .filter((p) =>
+        ((p.status === 'resolved' || p.geoStatus === 'resolved') &&
+          Number.isFinite(p.lat) &&
+          Number.isFinite(p.lon)) ||
+        p.visualStatus === 'placed' ||
+        !!p.visualPosition
+      )
       .map((p) => {
         const pt = projectCoordinate(p.lon, p.lat, p);
         return {
@@ -134,9 +151,16 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
         const mapX = (screenX - dimensions.width / 2 - viewState.panX) / viewState.zoom + dimensions.width / 2;
         const mapY = (screenY - dimensions.height / 2 - viewState.panY) / viewState.zoom + dimensions.height / 2;
 
-        const normX = Math.min(Math.max(mapX / imgW, 0), 1);
-        const normY = Math.min(Math.max(mapY / imgH, 0), 1);
+        if (mapX < 0 || mapY < 0 || mapX > imgW || mapY > imgH) {
+          setPickHint('请点击图片有效区域内');
+          window.setTimeout(() => setPickHint(null), 2400);
+          return;
+        }
 
+        const normX = mapX / imgW;
+        const normY = mapY / imgH;
+
+        setPickHint(null);
         onPlacePicked(pickingPlaceId, Math.round(mapX), Math.round(mapY), normX, normY);
         return;
       }
@@ -195,7 +219,7 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
   };
 
   // Fit to whole image
-  const handleFitToImage = () => {
+  const handleFitToImage = useCallback(() => {
     if (!onViewStateChange) return;
     const fit = calculateFitToImage(imgW, imgH, dimensions.width, dimensions.height);
     onViewStateChange({
@@ -203,7 +227,24 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
       panX: fit.panX,
       panY: fit.panY,
     });
-  };
+  }, [onViewStateChange, imgW, imgH, dimensions]);
+
+  // Fit only after ResizeObserver has measured the real viewport. Uploads and
+  // sidebar actions explicitly request a fit, so reloads preserve saved views.
+  useEffect(() => {
+    if (!hasMeasuredViewport || !onViewStateChange) return;
+
+    const shouldHandleRequest = fitRequestId !== lastFitRequestRef.current;
+    if (!shouldHandleRequest) return;
+
+    lastFitRequestRef.current = fitRequestId;
+    handleFitToImage();
+  }, [
+    fitRequestId,
+    handleFitToImage,
+    hasMeasuredViewport,
+    onViewStateChange,
+  ]);
 
   // Marker drag handlers in Image map space
   const handleMarkerDragMove = (placeId: string, screenDx: number, screenDy: number) => {
@@ -240,6 +281,24 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
         </div>
       )}
 
+      {pickHint && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 rounded-md bg-rose-600 px-3 py-2 text-xs text-white shadow-lg z-30">
+          {pickHint}
+        </div>
+      )}
+
+      {basemap.type === 'calibrated-image' && !basemap.transform && (
+        <div className="absolute top-4 right-4 max-w-xs rounded-lg border border-amber-200 bg-amber-50/95 px-3 py-2 text-xs text-amber-800 shadow-sm z-20">
+          校准尚未完成：请标定至少 3 个有效且不共线的地点。完成前地点与路线会暂时隐藏。
+        </div>
+      )}
+
+      {imageLoadError && (
+        <div className="absolute inset-x-6 top-1/2 -translate-y-1/2 rounded-lg border border-rose-200 bg-white p-4 text-center text-sm text-rose-700 shadow-lg z-30">
+          无法显示底图图片。请重新上传有效的 PNG、JPEG、WebP 或 SVG 文件。
+        </div>
+      )}
+
       <svg
         id="travel-map-svg"
         className="w-full h-full block"
@@ -265,6 +324,7 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
               width={imgW}
               height={imgH}
               preserveAspectRatio="xMidYMid meet"
+              onError={() => setImageLoadError(true)}
             />
           )}
         </g>
@@ -272,7 +332,12 @@ export const ImageMapView: React.FC<ImageMapViewProps> = ({
         {/* SVG Route Overlay */}
         <RouteOverlay
           places={places}
-          projectCoordinate={(lon, lat) => projectCoordinate(lon, lat)}
+          projectPlace={(place) => projectCoordinate(place.lon, place.lat, place)}
+          projectGeo={(lon, lat) => projectCoordinate(lon, lat)}
+          supportsGeodesic={
+            basemap.type === 'equirectangular-image' ||
+            (basemap.type === 'calibrated-image' && !!basemap.transform)
+          }
           style={routeStyle}
           canvasWidth={dimensions.width}
         />
