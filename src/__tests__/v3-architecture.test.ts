@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as d3 from 'd3-geo';
 import { migrateProjectV2ToV3 } from '../types/migration';
 import { REGION_CAMERA_PRESETS } from '../maplibre/regionPresets';
-import { createOfflineFallbackStyle } from '../maplibre/createTravelStyle';
+import { createCartoTravelCleanStyle, createNaturalEarthStyle } from '../maplibre/createTravelStyle';
 import { Place } from '../types';
 
 describe('travel-map V3 Architecture & Migration', () => {
@@ -125,13 +125,18 @@ describe('travel-map V3 Architecture & Migration', () => {
     });
   });
 
-  describe('Offline Fallback Map Style', () => {
-    it('creates valid style specification with Natural Earth source and layer', () => {
-      const fallback = createOfflineFallbackStyle();
-      expect(fallback.version).toBe(8);
-      expect(fallback.sources['ne-countries']).toBeDefined();
-      expect(fallback.layers.some((l) => l.id === 'ne-country-fill')).toBe(true);
-      expect(fallback.layers.some((l) => l.id === 'country-borders')).toBe(true);
+  describe('Map Styles Specification', () => {
+    it('creates valid Travel Clean style with Carto raster source and layers', async () => {
+      const style = await createCartoTravelCleanStyle();
+      expect(style.version).toBe(8);
+      expect(style.sources['carto-positron-nolabels']).toBeDefined();
+      expect(style.layers.some((l) => l.id === 'carto-tiles')).toBe(true);
+    });
+
+    it('creates valid Natural Earth offline vector style', async () => {
+      const style = await createNaturalEarthStyle();
+      expect(style.version).toBe(8);
+      expect(style.layers.some((l) => l.id === 'background')).toBe(true);
     });
   });
 

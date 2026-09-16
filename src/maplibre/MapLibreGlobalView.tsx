@@ -109,6 +109,10 @@ export const MapLibreGlobalView: React.FC<MapLibreGlobalViewProps> = ({
         map = mapInstance;
         mapRef.current = mapInstance;
 
+        mapInstance.on('error', (e) => {
+          console.warn('MapLibre map error:', e);
+        });
+
         mapInstance.on('load', () => {
           if (!isMounted) return;
           setMapLoaded(true);

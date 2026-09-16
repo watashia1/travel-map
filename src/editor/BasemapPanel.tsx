@@ -240,19 +240,21 @@ export const BasemapPanel: React.FC<BasemapPanelProps> = ({
         <section className="space-y-4">
           <div className="p-3 bg-blue-50/40 rounded-lg border border-blue-100 space-y-3">
             <div className="font-semibold text-slate-800 text-xs flex items-center justify-between">
-              <span>MapLibre + OpenFreeMap 矢量底图</span>
+              <span>全球矢量与切片底图引擎</span>
               <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-mono">
-                全球连续
+                连续缩放
               </span>
             </div>
 
             <div>
-              <label className="block text-slate-500 mb-1.5 font-medium">底图视觉风格</label>
-              <div className="grid grid-cols-3 gap-1.5">
+              <label className="block text-slate-500 mb-1.5 font-medium">底图视觉风格与源</label>
+              <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { id: 'travel-clean', label: '旅行极简 (推荐)' },
-                  { id: 'positron', label: '极简白底' },
-                  { id: 'liberty', label: '标准彩色' },
+                  { id: 'travel-clean', label: '旅行极简 (高速 CDN)' },
+                  { id: 'natural-earth', label: '离线内置矢量 (免外网)' },
+                  { id: 'liberty', label: 'OpenFreeMap 彩色' },
+                  { id: 'positron', label: 'OpenFreeMap 白底' },
+                  { id: 'osm-standard', label: '标准 OpenStreetMap' },
                 ].map((s) => {
                   const currentStyleId = (basemap as MapLibreBasemap).styleId || 'travel-clean';
                   const isSelected = currentStyleId === s.id;

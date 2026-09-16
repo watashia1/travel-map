@@ -27,15 +27,7 @@ interface PolarMapViewProps {
   onLabelDragEnd?: (placeId: string, offsetX: number, offsetY: number) => void;
 }
 
-const geoCache = new Map<string, any>();
-
-async function fetchGeoJSON(url: string): Promise<any> {
-  if (geoCache.has(url)) return geoCache.get(url);
-  const res = await fetch(url);
-  const data = await res.json();
-  geoCache.set(url, data);
-  return data;
-}
+import { fetchGeoJSON } from '../utils/assets';
 
 export const PolarMapView: React.FC<PolarMapViewProps> = ({
   places,
@@ -75,7 +67,7 @@ export const PolarMapView: React.FC<PolarMapViewProps> = ({
   // Load geojson
   useEffect(() => {
     let isMounted = true;
-    fetchGeoJSON('/data/ne_110m_admin_0_countries.geojson')
+    fetchGeoJSON('data/ne_110m_admin_0_countries.geojson')
       .then((geojson) => {
         if (isMounted) {
           setGeoFeatures(geojson.features || []);

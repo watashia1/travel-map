@@ -92,7 +92,12 @@ export type MapRegionType =
   | 'oceania'
   | 'antarctica';
 
-export type MapLibreStyleId = 'travel-clean' | 'liberty' | 'positron';
+export type MapLibreStyleId =
+  | 'travel-clean'
+  | 'natural-earth'
+  | 'liberty'
+  | 'positron'
+  | 'osm-standard';
 
 export interface MapLibreBasemap {
   type: 'builtin-maplibre';
